@@ -71,27 +71,6 @@ Install the [Live Server](https://marketplace.visualstudio.com/items?itemName=ri
 
 ---
 
-## 🍎 Make it a Mac App (click-to-open, no terminal)
-
-You can wrap the launcher into a native `.app` using **Automator** so it lives in your Dock or Applications folder:
-
-1. Open **Automator** (search Spotlight: `Automator`)
-2. Choose **New Document → Application**
-3. Search for **"Run Shell Script"** and drag it into the workflow
-4. Paste this into the script box (update the path to match where you cloned the repo):
-
-```bash
-cd /path/to/vn-library
-./launch.sh
-```
-
-5. Go to **File → Save** and name it `VN Library`
-6. Move the saved `.app` to `/Applications` or drag it to your Dock
-
-Now you can open VN Library like any other Mac app! 🎉
-
----
-
 ## 📂 File Structure
 
 ```
