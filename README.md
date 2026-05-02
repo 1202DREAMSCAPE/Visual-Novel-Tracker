@@ -34,52 +34,6 @@
 
 ---
 
-## 📸 Screenshots
-
-<details>
-<summary><strong>Light Mode — Dashboard</strong></summary>
-
-![Dashboard Light](docs/screenshots/dashboard-light.png)
-
-</details>
-
-<details>
-<summary><strong>Dark Mode — Dashboard</strong></summary>
-
-![Dashboard Dark](docs/screenshots/dashboard-dark.png)
-
-</details>
-
-<details>
-<summary><strong>Library with Filters</strong></summary>
-
-![Library](docs/screenshots/library-dark.png)
-
-</details>
-
-<details>
-<summary><strong>Game Details & Trail Log</strong></summary>
-
-![Game Details](docs/screenshots/game-details.png)
-
-</details>
-
-<details>
-<summary><strong>Profile & Settings Modal</strong></summary>
-
-![Profile](docs/screenshots/profile-modal.png)
-
-</details>
-
-<details>
-<summary><strong>Add Game</strong></summary>
-
-![Add Game](docs/screenshots/add-game.png)
-
-</details>
-
----
-
 ## 🚀 Running Locally
 
 VN Library is a **100% static web app** — no server, no database, no Node.js required. All data lives in your browser's `localStorage`.
