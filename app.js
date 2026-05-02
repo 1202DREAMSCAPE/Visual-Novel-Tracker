@@ -343,7 +343,10 @@ function renderGameDetails(game) {
     const rev = appData.reviews.find(r => r.playthroughId===p.id);
     const stars = rev ? '★'.repeat(rev.rating)+'☆'.repeat(5-rev.rating) : '';
     const reviewBlock = rev ? `<div class="review-text">
-      <div class="review-stars">${stars}</div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div class="review-stars">${stars}</div>
+        <button class="btn btn-ghost" style="font-size:.7rem;padding:.2rem .5rem;" onclick="openReviewModal('${p.id}','${game.id}')">${Icons.edit} Edit Review</button>
+      </div>
       <span class="${rev.hasSpoilers?'spoiler-text':''}" onclick="this.classList.toggle('revealed')">${rev.content||'No text.'}</span>
       ${rev.hasSpoilers?'<small style="display:block;color:var(--pink);margin-top:4px;">Spoiler — click to reveal</small>':''}
     </div>` : '';
@@ -521,9 +524,10 @@ window.openCompleteModal = function(pid, gid) {
       <div class="form-group"><label>Completion Date</label><input type="date" id="done-date" class="form-control" value="${today}" required></div>
       <div class="divider"></div>
       <div class="form-group"><label style="font-size:.82rem;">Rating</label>
-        <div class="star-rating ltr" id="ltr-stars">
-          ${[1,2,3,4,5].map(n=>`<input type="radio" id="qs${n}" name="qr" value="${n}"><label for="qs${n}">★</label>`).join('')}
+        <div class="star-rating">
+          ${[5,4,3,2,1].map(n=>`<input type="radio" id="qs${n}" name="qr" value="${n}" onchange="document.getElementById('qs-help').textContent = this.value + ' out of 5 stars'"><label for="qs${n}">★</label>`).join('')}
         </div>
+        <div id="qs-help" style="font-size:.75rem; color:var(--text-muted); text-align:right; margin-top:4px;">Optional rating</div>
       </div>
       <div class="form-group"><textarea id="done-text" class="form-control" rows="3" placeholder="Thoughts? (optional)"></textarea></div>
       <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
@@ -544,16 +548,18 @@ window.openCompleteModal = function(pid, gid) {
 
 // ── Full review modal ─────────────────────────────────────
 window.openReviewModal = function(pid, gid) {
-  openModal(`<h3 style="margin-bottom:1.5rem;">Write a Review</h3>
+  const existingRev = appData.reviews.find(r => r.playthroughId === pid);
+  openModal(`<h3 style="margin-bottom:1.5rem;">${existingRev ? 'Edit' : 'Write a'} Review</h3>
     <form id="rev-form">
       <div class="form-group"><label>Rating</label>
         <div class="star-rating">
-          ${[5,4,3,2,1].map(n=>`<input type="radio" id="s${n}" name="rating" value="${n}" required><label for="s${n}">★</label>`).join('')}
+          ${[5,4,3,2,1].map(n=>`<input type="radio" id="s${n}" name="rating" value="${n}" ${existingRev && existingRev.rating===n ? 'checked' : ''} required onchange="document.getElementById('rating-help').textContent = this.value + ' out of 5 stars'"><label for="s${n}">★</label>`).join('')}
         </div>
+        <div id="rating-help" style="font-size:.75rem; color:var(--text-muted); text-align:right; margin-top:4px;">${existingRev && existingRev.rating ? existingRev.rating + ' out of 5 stars' : 'Select a rating'}</div>
       </div>
-      <div class="form-group"><label>Your Thoughts</label><textarea id="rev-text" class="form-control" rows="4" required></textarea></div>
+      <div class="form-group"><label>Your Thoughts</label><textarea id="rev-text" class="form-control" rows="4" placeholder="Optional thoughts...">${existingRev ? existingRev.content||'' : ''}</textarea></div>
       <div class="form-group" style="display:flex;align-items:center;gap:10px;background:var(--bg-hover);padding:10px;border-radius:8px;">
-        <input type="checkbox" id="rev-spoil" style="accent-color:var(--pink);width:16px;height:16px;">
+        <input type="checkbox" id="rev-spoil" style="accent-color:var(--pink);width:16px;height:16px;" ${existingRev && existingRev.hasSpoilers ? 'checked' : ''}>
         <label for="rev-spoil" style="margin:0;cursor:pointer;font-size:.9rem;">Contains spoilers</label>
       </div>
       <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
@@ -564,10 +570,19 @@ window.openReviewModal = function(pid, gid) {
   document.getElementById('rev-form').onsubmit = e => {
     e.preventDefault();
     const r = document.querySelector('input[name="rating"]:checked');
-    appData.reviews.push({ id:uid(), playthroughId:pid, rating:r?+r.value:0,
-      content:document.getElementById('rev-text').value,
-      hasSpoilers:document.getElementById('rev-spoil').checked });
-    saveData(); closeModal(); renderView('game-details',appData.playthroughs.find(p=>p.id===pid)?.gameId);
+    const ratingVal = r ? +r.value : 0;
+    const contentVal = document.getElementById('rev-text').value;
+    const spoilVal = document.getElementById('rev-spoil').checked;
+    
+    if (existingRev) {
+      existingRev.rating = ratingVal;
+      existingRev.content = contentVal;
+      existingRev.hasSpoilers = spoilVal;
+    } else {
+      appData.reviews.push({ id:uid(), playthroughId:pid, rating:ratingVal,
+        content:contentVal, hasSpoilers:spoilVal });
+    }
+    saveData(); closeModal(); renderView('game-details', gid || appData.playthroughs.find(p=>p.id===pid)?.gameId);
   };
 };
 
