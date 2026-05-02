@@ -1,6 +1,6 @@
 // ── State ─────────────────────────────────────────────────
 const STORAGE_KEY = 'vnTrackerData';
-const defaults = { games:[], playthroughs:[], reviews:[], settings:{ theme:'light', backgroundUrl:'' } };
+const defaults = { games:[], playthroughs:[], reviews:[], settings:{ theme:'light', backgroundUrl:'', avatarUrl:'', tagline:'VN Enthusiast' } };
 
 const Icons = {
   check:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>`,
@@ -17,7 +17,9 @@ function loadData() {
     const d = localStorage.getItem(STORAGE_KEY);
     if (!d) return JSON.parse(JSON.stringify(defaults));
     const p = JSON.parse(d);
-    if (!p.settings) p.settings = { theme:'light', backgroundUrl:'' };
+    if (!p.settings) p.settings = { theme:'light', backgroundUrl:'', avatarUrl:'', tagline:'VN Enthusiast' };
+    if (!p.settings.tagline) p.settings.tagline = 'VN Enthusiast';
+    if (p.settings.avatarUrl === undefined) p.settings.avatarUrl = '';
     if (!p.reviews) p.reviews = [];
     return p;
   } catch(e) { return JSON.parse(JSON.stringify(defaults)); }
@@ -32,13 +34,22 @@ let appData = loadData();
 
 function applySettings() {
   const s = appData.settings;
-  document.body.setAttribute('data-theme', s.theme === 'dark' ? 'dark' : '');
+  document.documentElement.setAttribute('data-theme', s.theme === 'dark' ? 'dark' : '');
   if (s.backgroundUrl) {
     document.body.style.backgroundImage = `url('${s.backgroundUrl}')`;
     document.body.classList.add('has-custom-bg');
   } else {
     document.body.style.backgroundImage = '';
     document.body.classList.remove('has-custom-bg');
+  }
+  // Update avatar display
+  const av = document.getElementById('avatar-btn');
+  if (av) {
+    if (s.avatarUrl) {
+      av.style.backgroundImage = `url('${s.avatarUrl}')`;
+    } else {
+      av.style.backgroundImage = '';
+    }
   }
 }
 applySettings();
@@ -91,11 +102,12 @@ function renderView(view, param) {
   viewContainer.innerHTML = '';
   viewContainer.style.animation = 'none';
   requestAnimationFrame(() => { viewContainer.style.animation = ''; });
-  const titles = { dashboard:'Dashboard', library:'My Library', 'add-game':'Add Visual Novel' };
+  const titles = { dashboard:'Dashboard', library:'My Library', 'add-game':'Add Visual Novel', analytics:'Analytics' };
   pageTitle.textContent = titles[view] || '';
   if (view === 'dashboard') renderDashboard();
   else if (view === 'library') renderLibrary();
   else if (view === 'add-game') renderAddGame();
+  else if (view === 'analytics') renderAnalytics();
   else if (view === 'game-details') {
     const g = appData.games.find(g => g.id === param);
     if (g) { pageTitle.textContent = g.title; renderGameDetails(g); }
@@ -220,10 +232,14 @@ function renderAddGame() {
   viewContainer.innerHTML = `
     <div style="display:flex;gap:2.5rem;max-width:860px;margin:0 auto;">
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding-top:1rem;">
-        <img id="cover-prev" src="https://via.placeholder.com/240x340?text=Cover" style="width:200px;height:290px;object-fit:cover;border-radius:16px;margin-bottom:1.25rem;box-shadow:var(--shadow-m);">
-        <div class="form-group" style="width:100%;margin-bottom:0;">
+        <img id="cover-prev" src="https://via.placeholder.com/240x340?text=Cover" style="width:200px;height:290px;object-fit:cover;border-radius:16px;margin-bottom:1.25rem;box-shadow:var(--shadow-sm);">
+        <div class="form-group" style="width:100%;margin-bottom:.5rem;">
           <label>Cover Image URL</label>
           <input type="url" id="g-cover" class="form-control" placeholder="Paste URL…" oninput="document.getElementById('cover-prev').src=this.value||'https://via.placeholder.com/240x340?text=Cover'" style="text-align:center;">
+        </div>
+        <div style="display:flex;gap:.5rem;width:100%;">
+          <button type="button" class="btn btn-ghost" style="flex:1;font-size:.82rem;padding:.6rem;" onclick="cropCover()">✂️ Crop</button>
+          <label class="btn btn-ghost" style="flex:1;font-size:.82rem;padding:.6rem;cursor:pointer;">📁 File<input type="file" id="g-cover-file" accept="image/*" style="display:none;" onchange="coverFromFile(event)"></label>
         </div>
       </div>
       <div class="glass-panel" style="flex:1.5;padding:2rem;">
@@ -257,6 +273,25 @@ function renderAddGame() {
     saveData(); renderView('library');
   };
 }
+
+// Cover crop/file helpers
+window.cropCover = function() {
+  const url = document.getElementById('g-cover').value;
+  if (!url) { alert('Enter a cover URL first, then crop it.'); return; }
+  openCropper(url, dataUrl => {
+    document.getElementById('g-cover').value = dataUrl;
+    document.getElementById('cover-prev').src = dataUrl;
+  });
+};
+window.coverFromFile = function(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('g-cover').value = ev.target.result;
+    document.getElementById('cover-prev').src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+};
 
 // ── Game Details ──────────────────────────────────────────
 function renderGameDetails(game) {
@@ -495,16 +530,19 @@ document.querySelector('.avatar').addEventListener('click', () => {
   const total = appData.games.length;
   const done  = appData.playthroughs.filter(p=>p.status==='Completed').length;
   const favs  = appData.playthroughs.filter(p=>p.isFavorite).length;
+  const avStyle = s.avatarUrl ? `background-image:url('${s.avatarUrl}');` : '';
   openModal(`
-    <div style="text-align:center;margin-bottom:2rem;">
-      <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--pink-light));margin:0 auto 1rem;border:4px solid var(--bg-card);box-shadow:var(--shadow-m);"></div>
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <div class="profile-avatar-edit" id="profile-avatar" style="${avStyle}" title="Click to change photo">
+        <input type="file" id="avatar-file" accept="image/*" style="display:none;">
+      </div>
       <h2 style="margin-bottom:.25rem;">My Profile</h2>
-      <p style="color:var(--text-muted);font-size:.85rem;">VN Enthusiast</p>
+      <input type="text" id="profile-tagline" class="form-control" style="text-align:center;max-width:240px;margin:0 auto;padding:.5rem .75rem;font-size:.85rem;" value="${s.tagline||'VN Enthusiast'}" placeholder="Your tagline…">
     </div>
-    <div style="display:flex;justify-content:center;gap:2rem;margin-bottom:2rem;">
-      <div style="text-align:center;"><div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:var(--pink);">${total}</div><div style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Games</div></div>
-      <div style="text-align:center;"><div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:var(--pink);">${done}</div><div style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Completed</div></div>
-      <div style="text-align:center;"><div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:var(--pink);">${favs}</div><div style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Favorites</div></div>
+    <div style="display:flex;justify-content:center;gap:2rem;margin-bottom:1.5rem;">
+      <div style="text-align:center;"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--accent-primary);">${total}</div><div style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Games</div></div>
+      <div style="text-align:center;"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--accent-primary);">${done}</div><div style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Completed</div></div>
+      <div style="text-align:center;"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--accent-primary);">${favs}</div><div style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Favorites</div></div>
     </div>
     <div class="divider"></div>
     <h4 style="margin-bottom:1rem;font-size:.95rem;">Settings</h4>
@@ -524,9 +562,25 @@ document.querySelector('.avatar').addEventListener('click', () => {
     </div>
     <button class="btn btn-primary" style="width:100%;margin-top:1.25rem;" id="save-settings-btn">Save & Close</button>`);
 
+  // Avatar click to upload
+  document.getElementById('profile-avatar').addEventListener('click', () => {
+    document.getElementById('avatar-file').click();
+  });
+  document.getElementById('avatar-file').addEventListener('change', (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const url = ev.target.result;
+      document.getElementById('profile-avatar').style.backgroundImage = `url('${url}')`;
+      appData.settings.avatarUrl = url;
+    };
+    reader.readAsDataURL(file);
+  });
+
   document.getElementById('save-settings-btn').onclick = () => {
     appData.settings.theme = document.getElementById('dark-toggle').checked ? 'dark' : 'light';
     appData.settings.backgroundUrl = document.getElementById('bg-url').value;
+    appData.settings.tagline = document.getElementById('profile-tagline').value || 'VN Enthusiast';
     saveData(); closeModal();
   };
 });
@@ -556,6 +610,202 @@ window.importData = function(e) {
   reader.readAsText(file);
 };
 
+// ── Image Cropper ─────────────────────────────────────────
+window.openCropper = function(imgUrl, callback) {
+  const overlay = document.createElement('div');
+  overlay.className = 'cropper-overlay';
+  overlay.innerHTML = `
+    <p class="cropper-hint">Click and drag to select the crop area, then click "Crop"</p>
+    <div class="cropper-canvas-wrap"><canvas id="crop-canvas"></canvas></div>
+    <div class="cropper-toolbar">
+      <button class="btn btn-ghost" id="crop-cancel" style="color:#fff;border-color:rgba(255,255,255,.3);">Cancel</button>
+      <button class="btn btn-primary" id="crop-apply">Crop & Apply</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const canvas = document.getElementById('crop-canvas');
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  let sel = { x1:0, y1:0, x2:0, y2:0, dragging:false };
+  let scale = 1;
+
+  img.onload = () => {
+    const maxW = Math.min(window.innerWidth * 0.85, 700);
+    const maxH = window.innerHeight * 0.6;
+    scale = Math.min(maxW / img.width, maxH / img.height, 1);
+    canvas.width = img.width * scale;
+    canvas.height = img.height * scale;
+    drawCanvas();
+  };
+  img.onerror = () => {
+    alert('Could not load image. Make sure the URL is accessible.');
+    overlay.remove();
+  };
+  img.src = imgUrl;
+
+  function drawCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    if (sel.x1 !== sel.x2 || sel.y1 !== sel.y2) {
+      // Dim outside selection
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const sx = Math.min(sel.x1, sel.x2), sy = Math.min(sel.y1, sel.y2);
+      const sw = Math.abs(sel.x2 - sel.x1), sh = Math.abs(sel.y2 - sel.y1);
+      ctx.clearRect(sx, sy, sw, sh);
+      ctx.drawImage(img, sx/scale, sy/scale, sw/scale, sh/scale, sx, sy, sw, sh);
+      ctx.strokeStyle = '#ff8fa3';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6,3]);
+      ctx.strokeRect(sx, sy, sw, sh);
+      ctx.setLineDash([]);
+    }
+  }
+
+  canvas.addEventListener('mousedown', e => {
+    const r = canvas.getBoundingClientRect();
+    sel.x1 = e.clientX - r.left; sel.y1 = e.clientY - r.top;
+    sel.x2 = sel.x1; sel.y2 = sel.y1;
+    sel.dragging = true;
+  });
+  canvas.addEventListener('mousemove', e => {
+    if (!sel.dragging) return;
+    const r = canvas.getBoundingClientRect();
+    sel.x2 = Math.max(0, Math.min(canvas.width, e.clientX - r.left));
+    sel.y2 = Math.max(0, Math.min(canvas.height, e.clientY - r.top));
+    drawCanvas();
+  });
+  canvas.addEventListener('mouseup', () => { sel.dragging = false; });
+
+  document.getElementById('crop-cancel').onclick = () => overlay.remove();
+  document.getElementById('crop-apply').onclick = () => {
+    const sx = Math.min(sel.x1, sel.x2)/scale, sy = Math.min(sel.y1, sel.y2)/scale;
+    const sw = Math.abs(sel.x2 - sel.x1)/scale, sh = Math.abs(sel.y2 - sel.y1)/scale;
+    if (sw < 10 || sh < 10) { alert('Please select a larger area.'); return; }
+    const out = document.createElement('canvas');
+    out.width = sw; out.height = sh;
+    out.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+    const dataUrl = out.toDataURL('image/jpeg', 0.9);
+    callback(dataUrl);
+    overlay.remove();
+  };
+};
+
+// ── Analytics ─────────────────────────────────────────────
+function renderAnalytics() {
+  const games = appData.games;
+  const pts = appData.playthroughs;
+  const revs = appData.reviews;
+
+  // Tag distribution
+  const tagCounts = {};
+  games.forEach(g => (g.tags||[]).forEach(t => { tagCounts[t] = (tagCounts[t]||0) + 1; }));
+  const topTags = Object.entries(tagCounts).sort((a,b) => b[1]-a[1]).slice(0, 8);
+  const tagMax = topTags.length ? Math.max(...topTags.map(t=>t[1])) : 1;
+
+  // Platform distribution
+  const platCounts = {};
+  games.forEach(g => { const p = g.platform||'Unknown'; platCounts[p] = (platCounts[p]||0)+1; });
+  const platforms = Object.entries(platCounts).sort((a,b) => b[1]-a[1]);
+  const platMax = platforms.length ? Math.max(...platforms.map(p=>p[1])) : 1;
+
+  // Status distribution
+  const statusCounts = { 'Want to Play':0, 'Playing':0, 'Completed':0, 'Paused':0, 'Dropped':0 };
+  games.forEach(g => { const s = g.status || 'Want to Play'; statusCounts[s] = (statusCounts[s]||0)+1; });
+  const statusTotal = games.length || 1;
+
+  // Rating distribution
+  const ratingCounts = {1:0, 2:0, 3:0, 4:0, 5:0};
+  revs.forEach(r => { if (r.rating >= 1 && r.rating <= 5) ratingCounts[r.rating]++; });
+  const ratingMax = Math.max(...Object.values(ratingCounts), 1);
+
+  // Average completion time
+  const completedPts = pts.filter(p => p.status==='Completed' && p.startDate && p.endDate);
+  let avgDays = 0;
+  let fastestDays = Infinity, slowestDays = 0;
+  if (completedPts.length) {
+    const daysArr = completedPts.map(p => {
+      const d = Math.ceil(Math.abs(new Date(p.endDate)-new Date(p.startDate))/86400000);
+      return d;
+    });
+    avgDays = Math.round(daysArr.reduce((a,b)=>a+b,0) / daysArr.length);
+    fastestDays = Math.min(...daysArr);
+    slowestDays = Math.max(...daysArr);
+  }
+
+  // Most productive month
+  const monthCounts = {};
+  completedPts.forEach(p => {
+    const m = p.endDate.substring(0,7); // YYYY-MM
+    monthCounts[m] = (monthCounts[m]||0)+1;
+  });
+  const topMonth = Object.entries(monthCounts).sort((a,b)=>b[1]-a[1])[0];
+  const topMonthLabel = topMonth ? new Date(topMonth[0]+'-01').toLocaleDateString('en-US',{month:'long',year:'numeric'}) + ` (${topMonth[1]})` : '—';
+
+  // Total routes
+  const totalRoutes = pts.length;
+  const completedRoutes = pts.filter(p=>p.status==='Completed').length;
+  const favRoutes = pts.filter(p=>p.isFavorite).length;
+  const avgRating = revs.length ? (revs.reduce((s,r)=>s+r.rating,0)/revs.length).toFixed(1) : '—';
+
+  function barChart(data, max) {
+    if (!data.length) return '<p style="color:var(--text-muted);font-size:.85rem;">No data yet.</p>';
+    return `<div class="chart-bars">${data.map(([label, count]) => {
+      const h = Math.max(4, (count/max)*120);
+      return `<div class="chart-bar"><div class="chart-bar-fill" style="height:${h}px;"><span class="bar-count">${count}</span></div><span class="chart-bar-label" title="${label}">${label}</span></div>`;
+    }).join('')}</div>`;
+  }
+
+  function distBars(data, total) {
+    return Object.entries(data).map(([label, count]) => {
+      const pct = total ? Math.round((count/total)*100) : 0;
+      return `<div class="dist-bar-wrap"><span class="dist-bar-label">${label}</span><div class="dist-bar-track"><div class="dist-bar-fill" style="width:${pct}%;"></div></div><span class="dist-bar-count">${count}</span></div>`;
+    }).join('');
+  }
+
+  viewContainer.innerHTML = `
+    <div class="analytics-grid">
+      <div class="analytics-card">
+        <h4>📊 Overview</h4>
+        <div class="analytics-stat-row"><span class="analytics-stat-label">Total Games</span><span class="analytics-stat-value">${games.length}</span></div>
+        <div class="analytics-stat-row"><span class="analytics-stat-label">Total Routes Logged</span><span class="analytics-stat-value">${totalRoutes}</span></div>
+        <div class="analytics-stat-row"><span class="analytics-stat-label">Routes Completed</span><span class="analytics-stat-value">${completedRoutes}</span></div>
+        <div class="analytics-stat-row"><span class="analytics-stat-label">Favorite Routes</span><span class="analytics-stat-value">${favRoutes}</span></div>
+        <div class="analytics-stat-row"><span class="analytics-stat-label">Reviews Written</span><span class="analytics-stat-value">${revs.length}</span></div>
+        <div class="analytics-stat-row"><span class="analytics-stat-label">Average Rating</span><span class="analytics-stat-value">${avgRating} ★</span></div>
+      </div>
+
+      <div class="analytics-card">
+        <h4>⏱️ Completion Time</h4>
+        <div class="analytics-stat-row"><span class="analytics-stat-label">Average</span><span class="analytics-stat-value">${completedPts.length ? avgDays+' days' : '—'}</span></div>
+        <div class="analytics-stat-row"><span class="analytics-stat-label">Fastest Route</span><span class="analytics-stat-value">${fastestDays !== Infinity ? fastestDays+' days' : '—'}</span></div>
+        <div class="analytics-stat-row"><span class="analytics-stat-label">Slowest Route</span><span class="analytics-stat-value">${slowestDays ? slowestDays+' days' : '—'}</span></div>
+        <div class="analytics-stat-row"><span class="analytics-stat-label">Most Productive Month</span><span class="analytics-stat-value" style="font-size:.9rem;">${topMonthLabel}</span></div>
+      </div>
+
+      <div class="analytics-card">
+        <h4>🏷️ Tags</h4>
+        ${barChart(topTags, tagMax)}
+      </div>
+
+      <div class="analytics-card">
+        <h4>🎮 By Platform</h4>
+        ${barChart(platforms, platMax)}
+      </div>
+
+      <div class="analytics-card">
+        <h4>📋 Status Distribution</h4>
+        ${distBars(statusCounts, statusTotal)}
+      </div>
+
+      <div class="analytics-card">
+        <h4>⭐ Rating Distribution</h4>
+        ${barChart(Object.entries(ratingCounts).map(([k,v])=>[k+' ★',v]), ratingMax)}
+      </div>
+    </div>`;
+}
+
 // ── Falling leaves ────────────────────────────────────────
 (function createLeaves() {
   const wrap = document.createElement('div');
@@ -576,3 +826,4 @@ window.importData = function(e) {
 
 // ── Init ──────────────────────────────────────────────────
 renderView('dashboard');
+applySettings(); // re-apply to set avatar after DOM is ready

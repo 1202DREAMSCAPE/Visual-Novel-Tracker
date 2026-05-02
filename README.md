@@ -27,8 +27,12 @@
 | 🎨 **Dark & Light Mode** | Toggleable *Coquette* (light) and *Chic Noir* (dark) themes |
 | 🖼️ **Custom Backgrounds** | Set any image URL as a personal background wallpaper |
 | 🔍 **Smart Library Filters** | Filter by platform, status (Playing / Completed / Dropped…), or search by title, dev, or tag |
-| 📊 **Completion Progress Bar** | Per-game route completion bar in the game detail view |
+| 📊 **Analytics Dashboard** | Tag distribution, platform breakdown, rating charts, average completion time, and more |
+| ✂️ **Image Cropper** | Crop cover art from URL or upload from local files — no external tools needed |
+| 👤 **Custom Profile** | Upload your own avatar photo and set a custom tagline |
+| 📈 **Completion Progress Bar** | Per-game route completion bar in the game detail view |
 | 💾 **Data Export / Import** | Backup and restore your entire library as a `.json` file |
+| 📌 **Collapsible Sidebar** | Collapse the nav to icon-only mode for more screen space |
 | 🍁 **Falling Leaves** | Animated 🍁🍂🍃 leaves gently float across every page |
 
 ---
@@ -92,13 +96,37 @@ Now you can open VN Library like any other Mac app! 🎉
 
 ```
 vn-library/
-├── index.html          # App shell & navigation
-├── styles.css          # All styling (light + dark tokens, animations)
-├── app.js              # All app logic, routing, and localStorage
+├── index.html          # App shell & navigation (sidebar, modals)
+├── styles.css          # All styling (light + dark tokens, analytics, animations)
+├── app.js              # All app logic, routing, image cropper, analytics, localStorage
 ├── launch.sh           # One-click local launcher script
-└── docs/
-    └── screenshots/    # README screenshots
+└── assets/             # App assets
 ```
+
+---
+
+## 📊 Analytics
+
+The **Analytics** page gives you a bird's-eye view of your VN journey:
+
+- **Overview** — Total games, routes, completed count, favorites, reviews, average rating
+- **Completion Time** — Average, fastest, and slowest route completion times + most productive month
+- **Tags** — Bar chart showing how many VNs you have per tag (e.g. Otome, Romance, Sci-Fi)
+- **By Platform** — Bar chart of your games across Steam, Switch, Itch.io, etc.
+- **Status Distribution** — Horizontal bar breakdown of Want to Play / Playing / Completed / Paused / Dropped
+- **Rating Distribution** — Bar chart of your 1–5 star ratings across all reviews
+
+---
+
+## ✂️ Cover Image Cropper
+
+When adding a VN, you can:
+
+1. **Paste a URL** for the cover art
+2. Click **✂️ Crop** to open a full-screen cropper — drag to select the area you want, then apply
+3. Or click **📁 File** to upload an image directly from your computer
+
+The cropped/uploaded image is stored as a data URL in localStorage, so it works fully offline.
 
 ---
 
@@ -122,7 +150,7 @@ All your data is stored in your browser's `localStorage` under the key `vnTracke
 - **HTML5** — semantic structure
 - **Vanilla CSS** — custom properties, animations, dark mode via `[data-theme]`
 - **Vanilla JavaScript** — zero dependencies, zero build step
-- **Google Fonts** — [Cormorant Garamond](https://fonts.google.com/specimen/Cormorant+Garamond) (headings) + [DM Sans](https://fonts.google.com/specimen/DM+Sans) (body)
+- **Google Fonts** — [Playfair Display](https://fonts.google.com/specimen/Playfair+Display) (headings) + [Poppins](https://fonts.google.com/specimen/Poppins) (body)
 
 ---
 
