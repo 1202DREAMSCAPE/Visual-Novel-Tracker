@@ -132,6 +132,45 @@ function tagsHTML(tags, large) {
   return tags.map(t => `<span class="tag-pill"${large?' style="padding:3px 12px;"':''}>${t}</span>`).join('');
 }
 
+function getAllTags() {
+  const s = new Set();
+  appData.games.forEach(g => (g.tags||[]).forEach(t => s.add(t)));
+  return [...s].sort();
+}
+
+function setupTagAutocomplete(inputId) {
+  const input = document.getElementById(inputId); if (!input) return;
+  const existing = getAllTags();
+  if (!existing.length) return;
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;';
+  existing.forEach(tag => {
+    const pill = document.createElement('button');
+    pill.type = 'button';
+    pill.className = 'tag-pill';
+    pill.style.cssText = 'cursor:pointer;opacity:.6;transition:opacity .2s;font-size:.7rem;';
+    pill.textContent = tag;
+    pill.onmouseenter = () => { pill.style.opacity = '1'; };
+    pill.onmouseleave = () => { pill.style.opacity = pill.dataset.active==='1'?'1':'.6'; };
+    pill.onclick = () => {
+      const cur = input.value.split(',').map(t=>t.trim()).filter(Boolean);
+      if (cur.includes(tag)) {
+        input.value = cur.filter(t=>t!==tag).join(', ');
+        pill.style.opacity = '.6'; pill.dataset.active = '0';
+      } else {
+        cur.push(tag);
+        input.value = cur.join(', ');
+        pill.style.opacity = '1'; pill.dataset.active = '1';
+      }
+    };
+    // Highlight if already selected
+    const cur = input.value.split(',').map(t=>t.trim());
+    if (cur.includes(tag)) { pill.style.opacity = '1'; pill.dataset.active = '1'; }
+    wrap.appendChild(pill);
+  });
+  input.parentNode.appendChild(wrap);
+}
+
 // ── Dashboard ─────────────────────────────────────────────
 function renderDashboard() {
   const total = appData.games.length;
@@ -263,6 +302,7 @@ function renderAddGame() {
         </form>
       </div>
     </div>`;
+  setupTagAutocomplete('g-tags');
   document.getElementById('add-form').onsubmit = e => {
     e.preventDefault();
     const tags = document.getElementById('g-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
@@ -312,7 +352,8 @@ function renderGameDetails(game) {
       <div class="character-profile-container">
         ${p.characterPhotoUrl?`<img class="character-photo" src="${p.characterPhotoUrl}" alt="Character">` : ''}
         ${p.characterProfile?`<div class="character-notes">${p.characterProfile}</div>` : ''}
-      </div>` : '';
+        <button class="btn btn-ghost" style="margin-left:auto;font-size:.75rem;padding:.35rem .75rem;" onclick="openEditRouteModal('${p.id}','${game.id}')">${Icons.edit}</button>
+      </div>` : `<button class="btn btn-ghost" style="font-size:.75rem;padding:.35rem .75rem;margin-top:.5rem;" onclick="openEditRouteModal('${p.id}','${game.id}')">${Icons.edit} Edit Character</button>`;
 
     const actions = p.status==='Playing' ? `<div style="display:flex;gap:8px;margin-top:1rem;">
         <button class="btn btn-success" onclick="openCompleteModal('${p.id}','${game.id}')">${Icons.check} Complete</button>
@@ -408,7 +449,12 @@ window.openPlaythroughModal = function(gid) {
     <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1.5rem;">Track a new character or route.</p>
     <form id="pt-form">
       <div class="form-group"><label>Route / Character *</label><input type="text" id="pt-route" class="form-control" placeholder="e.g. Zen's Route" required></div>
-      <div class="form-group"><label>Character Photo URL</label><input type="url" id="pt-photo" class="form-control" placeholder="Sprite or art URL…"></div>
+      <div class="form-group"><label>Character Photo</label>
+        <div style="display:flex;gap:.5rem;align-items:center;">
+          <input type="url" id="pt-photo" class="form-control" placeholder="Paste URL…" style="flex:1;">
+          <label class="btn btn-ghost" style="font-size:.8rem;padding:.6rem .85rem;cursor:pointer;flex-shrink:0;">📁 File<input type="file" accept="image/*" style="display:none;" onchange="routePhotoFromFile(event)"></label>
+        </div>
+      </div>
       <div class="form-group"><label>Character Notes</label><textarea id="pt-notes" class="form-control" rows="2" placeholder="Describe the character…"></textarea></div>
       <div class="form-group"><label>Start Date</label><input type="date" id="pt-start" class="form-control" value="${today}" required></div>
       <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
@@ -424,6 +470,44 @@ window.openPlaythroughModal = function(gid) {
       characterProfile:document.getElementById('pt-notes').value,
       status:'Playing', startDate:document.getElementById('pt-start').value,
       endDate:'', isFavorite:false });
+    saveData(); closeModal(); renderView('game-details',gid);
+  };
+};
+
+// Route photo from file helper
+window.routePhotoFromFile = function(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const input = document.getElementById('pt-photo') || document.getElementById('er-photo');
+    if (input) input.value = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+// ── Edit Route modal ──────────────────────────────────────
+window.openEditRouteModal = function(pid, gid) {
+  const p = appData.playthroughs.find(p=>p.id===pid); if(!p) return;
+  openModal(`<h3 style="margin-bottom:1.5rem;">Edit Route</h3>
+    <form id="er-form">
+      <div class="form-group"><label>Route / Character Name</label><input type="text" id="er-route" class="form-control" value="${p.route||''}" required></div>
+      <div class="form-group"><label>Character Photo</label>
+        <div style="display:flex;gap:.5rem;align-items:center;">
+          <input type="url" id="er-photo" class="form-control" placeholder="Paste URL…" style="flex:1;" value="${p.characterPhotoUrl||''}">
+          <label class="btn btn-ghost" style="font-size:.8rem;padding:.6rem .85rem;cursor:pointer;flex-shrink:0;">📁 File<input type="file" accept="image/*" style="display:none;" onchange="routePhotoFromFile(event)"></label>
+        </div>
+      </div>
+      <div class="form-group"><label>Character Notes</label><textarea id="er-notes" class="form-control" rows="3">${p.characterProfile||''}</textarea></div>
+      <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
+        <button type="button" class="btn btn-ghost" style="flex:1;" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="flex:2;">${Icons.check} Save</button>
+      </div>
+    </form>`);
+  document.getElementById('er-form').onsubmit = e => {
+    e.preventDefault();
+    p.route = document.getElementById('er-route').value;
+    p.characterPhotoUrl = document.getElementById('er-photo').value;
+    p.characterProfile = document.getElementById('er-notes').value;
     saveData(); closeModal(); renderView('game-details',gid);
   };
 };
@@ -511,6 +595,7 @@ window.openEditModal = function(gid) {
         <button type="submit" class="btn btn-primary" style="flex:2;">${Icons.check} Save</button>
       </div>
     </form>`);
+  setupTagAutocomplete('e-tags');
   document.getElementById('edit-form').onsubmit = e => {
     e.preventDefault();
     g.title = document.getElementById('e-title').value;
@@ -626,7 +711,8 @@ window.openCropper = function(imgUrl, callback) {
   const canvas = document.getElementById('crop-canvas');
   const ctx = canvas.getContext('2d');
   const img = new Image();
-  img.crossOrigin = 'anonymous';
+  // Only set crossOrigin for non-data URLs (data URLs don't need it)
+  if (!imgUrl.startsWith('data:')) img.crossOrigin = 'anonymous';
   let sel = { x1:0, y1:0, x2:0, y2:0, dragging:false };
   let scale = 1;
 
@@ -639,7 +725,13 @@ window.openCropper = function(imgUrl, callback) {
     drawCanvas();
   };
   img.onerror = () => {
-    alert('Could not load image. Make sure the URL is accessible.');
+    // If crossOrigin failed, retry without it (image will show but crop may be limited)
+    if (img.crossOrigin !== null) {
+      img.crossOrigin = null;
+      img.src = imgUrl;
+      return;
+    }
+    alert('Could not load image. Try uploading via the 📁 File button instead.');
     overlay.remove();
   };
   img.src = imgUrl;
@@ -686,9 +778,13 @@ window.openCropper = function(imgUrl, callback) {
     const out = document.createElement('canvas');
     out.width = sw; out.height = sh;
     out.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-    const dataUrl = out.toDataURL('image/jpeg', 0.9);
-    callback(dataUrl);
-    overlay.remove();
+    try {
+      const dataUrl = out.toDataURL('image/jpeg', 0.9);
+      callback(dataUrl);
+      overlay.remove();
+    } catch(e) {
+      alert('This external image can\'t be cropped due to browser security restrictions.\n\nTip: Use the 📁 File button to upload the image from your computer first, then crop it.');
+    }
   };
 };
 
