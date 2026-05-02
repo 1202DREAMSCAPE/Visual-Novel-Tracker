@@ -52,6 +52,28 @@ const navLinks      = document.querySelectorAll('.nav-links a');
 const modalContainer= document.getElementById('modal-container');
 const modalBody     = document.getElementById('modal-body');
 
+// ── Sidebar collapse ──────────────────────────────────────
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+
+function setSidebarState(collapsed) {
+  if (collapsed) {
+    sidebar.classList.add('collapsed');
+  } else {
+    sidebar.classList.remove('collapsed');
+  }
+  localStorage.setItem('vnSidebarCollapsed', collapsed ? '1' : '0');
+}
+
+// Restore saved state
+if (localStorage.getItem('vnSidebarCollapsed') === '1') {
+  sidebar.classList.add('collapsed');
+}
+
+sidebarToggle.addEventListener('click', () => {
+  setSidebarState(!sidebar.classList.contains('collapsed'));
+});
+
 // ── Nav ───────────────────────────────────────────────────
 navLinks.forEach(link => {
   link.addEventListener('click', e => {
