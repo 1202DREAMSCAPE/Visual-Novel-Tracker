@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VN Library</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h1>VN Library</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="active" data-view="dashboard">
+                    <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span> Dashboard
+                </a></li>
+                <li><a href="#" data-view="library">
+                    <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span> Library
+                </a></li>
+                <li><a href="#" data-view="add-game">
+                    <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span> Add Game
+                </a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <h2 id="page-title">Dashboard</h2>
+                <div class="user-profile">
+                    <div class="avatar"></div>
+                </div>
+            </header>
+
+            <!-- Dynamic Views Container -->
+            <div id="view-container" class="view-container">
+                <!-- Views will be injected here via JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals (Add Playthrough, Add Review) -->
+    <div id="modal-container" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" id="modal-body">
+            <!-- Modal content injected here -->
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
