@@ -43,8 +43,6 @@
 
 ## 📖 New Library Features
 
-![Library View](./assets/library.png)
-
 We've recently upgraded the library experience to make managing large collections even easier:
 
 - **View Modes**: Choose **List View** for a compact, text-heavy layout, or **Grid L** to see your covers in high-definition glory. **Grid S** is perfect for those with massive backlogs.
