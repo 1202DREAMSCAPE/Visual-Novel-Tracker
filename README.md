@@ -6,6 +6,7 @@
 
 *Track routes. Log characters. Write reviews. Fall in love with your library.*
 
+![VN Library Demo](./assets/demo.webp)
 
 [![Made with](https://img.shields.io/badge/Made%20with-Vanilla%20JS-f472a0?style=flat-square&logo=javascript&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![Storage](https://img.shields.io/badge/Storage-localStorage-ffb3c6?style=flat-square)](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
@@ -43,6 +44,8 @@
 ---
 
 ## 📖 New Library Features
+
+![Library View](./assets/library.png)
 
 We've recently upgraded the library experience to make managing large collections even easier:
 

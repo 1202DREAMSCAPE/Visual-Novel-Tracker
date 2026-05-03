@@ -9,7 +9,8 @@ const Icons = {
   heart:`<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
   drop:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
   download:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
-  upload:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`
+  upload:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
+  fileText:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`
 };
 
 function loadData() {
@@ -117,7 +118,7 @@ function renderView(view, param) {
 
 // ── Helpers ───────────────────────────────────────────────
 function statusBadge(s) {
-  const cls = { Playing:'status-playing', Completed:'status-completed', Dropped:'status-dropped', Paused:'status-paused' }[s] || 'status-playing';
+  const cls = { 'Not Started':'status-paused', Playing:'status-playing', Completed:'status-completed', Dropped:'status-dropped', Paused:'status-paused' }[s] || 'status-playing';
   return `<span class="status-badge ${cls}">${s}</span>`;
 }
 
@@ -188,13 +189,13 @@ function renderDashboard() {
       <h3 class="section-heading" style="display:flex;align-items:center;gap:8px;">▶ Currently Playing <span class="now-playing-count">${playingGames.length}</span></h3>
       <div class="now-playing-strip">${playingGames.map(g => {
         const activeRoutes = appData.playthroughs.filter(p => p.gameId === g.id && p.status === 'Playing');
-        const routeText = activeRoutes.length ? activeRoutes.map(p=>p.route).join(', ') : 'No route started yet';
-        const startText = activeRoutes.length ? `Started ${activeRoutes[0]?.startDate || '—'}` : '';
+        const routeText = activeRoutes.length ? activeRoutes.map(p=>p.route).join(', ') : '';
+        const startText = g.startDate ? `Started ${g.startDate}` : (activeRoutes.length && activeRoutes[0]?.startDate ? `Started ${activeRoutes[0].startDate}` : '');
         return `<div class="now-playing-card" onclick="renderView('game-details','${g.id}')">
           <img src="${g.coverUrl||'https://via.placeholder.com/80x110?text=?'}" alt="${g.title}">
           <div class="now-playing-info">
             <div class="now-playing-title">${g.title}</div>
-            <div class="now-playing-route">${routeText}</div>
+            ${routeText ? `<div class="now-playing-route">${routeText}</div>` : ''}
             ${startText ? `<div class="now-playing-route" style="font-size:.7rem;color:var(--text-muted);">${startText}</div>` : ''}
           </div>
         </div>`;
@@ -519,9 +520,13 @@ function renderAddGame() {
           </div>
           <div class="form-group">
             <label>Status</label>
-            <select id="g-status" class="form-control">
+            <select id="g-status" class="form-control" onchange="document.getElementById('g-start-date-container').style.display = this.value === 'Want to Play' ? 'none' : 'block'">
               <option>Want to Play</option><option>Playing</option><option>Completed</option><option>Paused</option><option>Dropped</option>
             </select>
+          </div>
+          <div class="form-group" id="g-start-date-container" style="display:none;">
+            <label>Date Started</label>
+            <input type="date" id="g-start-date" class="form-control" value="${new Date().toISOString().split('T')[0]}">
           </div>
           <div class="form-group"><label>Tags (comma separated)</label><input type="text" id="g-tags" class="form-control" placeholder="Otome, Sci-Fi, Romance…"></div>
           <div class="form-group"><label>Synopsis</label><textarea id="g-desc" class="form-control" rows="3" placeholder="What is this VN about?"></textarea></div>
@@ -533,9 +538,11 @@ function renderAddGame() {
   document.getElementById('add-form').onsubmit = e => {
     e.preventDefault();
     const tags = document.getElementById('g-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+    const status = document.getElementById('g-status').value;
+    const startDate = status !== 'Want to Play' ? document.getElementById('g-start-date').value : '';
     appData.games.push({ id:uid(), title:document.getElementById('g-title').value,
       developer:document.getElementById('g-dev').value, coverUrl:document.getElementById('g-cover').value,
-      platform:document.getElementById('g-platform').value, status:document.getElementById('g-status').value,
+      platform:document.getElementById('g-platform').value, status, startDate,
       tags, description:document.getElementById('g-desc').value });
     saveData(); renderView('library');
   };
@@ -566,7 +573,20 @@ function renderGameDetails(game) {
   const completedCount = pts.filter(p=>p.status==='Completed').length;
   const progressPct = pts.length ? Math.round((completedCount/pts.length)*100) : 0;
 
-  const logsHTML = pts.slice().reverse().map(p => {
+  // Sort helper
+  function sortPts(arr, sortMode) {
+    const sorted = arr.slice();
+    switch(sortMode) {
+      case 'alpha-az': return sorted.sort((a,b) => a.route.localeCompare(b.route));
+      case 'alpha-za': return sorted.sort((a,b) => b.route.localeCompare(a.route));
+      case 'started-new': return sorted.sort((a,b) => (b.startDate||'').localeCompare(a.startDate||''));
+      case 'started-old': return sorted.sort((a,b) => (a.startDate||'zzzz').localeCompare(b.startDate||'zzzz'));
+      case 'status': return sorted.sort((a,b) => { const order={'Not Started':0,'Playing':1,'Paused':2,'Completed':3,'Dropped':4}; return (order[a.status]||9)-(order[b.status]||9); });
+      default: return sorted.slice().reverse();
+    }
+  }
+
+  function buildLogEntry(p) {
     const rev = appData.reviews.find(r => r.playthroughId===p.id);
     const stars = rev ? '★'.repeat(rev.rating)+'☆'.repeat(5-rev.rating) : '';
     const reviewBlock = rev ? `<div class="review-text">
@@ -585,7 +605,10 @@ function renderGameDetails(game) {
         <button class="btn btn-ghost" style="margin-left:auto;font-size:.75rem;padding:.35rem .75rem;" onclick="openEditRouteModal('${p.id}','${game.id}')">${Icons.edit}</button>
       </div>` : `<button class="btn btn-ghost" style="font-size:.75rem;padding:.35rem .75rem;margin-top:.5rem;" onclick="openEditRouteModal('${p.id}','${game.id}')">${Icons.edit} Edit Character</button>`;
 
-    const actions = p.status==='Playing' ? `<div style="display:flex;gap:8px;margin-top:1rem;">
+    const actions = p.status==='Not Started' ? `<div style="display:flex;gap:8px;margin-top:1rem;">
+        <button class="btn btn-primary" onclick="startRoute('${p.id}','${game.id}')">▶ Start Playing</button>
+      </div>`
+    : p.status==='Playing' ? `<div style="display:flex;gap:8px;margin-top:1rem;">
         <button class="btn btn-success" onclick="openCompleteModal('${p.id}','${game.id}')">${Icons.check} Complete</button>
         <button class="btn btn-ghost" onclick="pauseRoute('${p.id}','${game.id}')">${Icons.drop} Pause</button>
         <button class="btn btn-ghost" onclick="dropRoute('${p.id}','${game.id}')">Drop</button>
@@ -597,6 +620,7 @@ function renderGameDetails(game) {
     : (!rev && p.status==='Completed') ? `<button class="btn btn-ghost" style="margin-top:1rem;" onclick="openReviewModal('${p.id}','${game.id}')">${Icons.edit} Write Review</button>` : '';
 
     const elapsed = p.status==='Completed' ? daysBetween(p.startDate,p.endDate) : '';
+    const dateInfo = p.startDate ? `<span>Started: ${p.startDate}</span>` : `<span style="font-style:italic;">Not started yet</span>`;
 
     return `<div class="log-entry${p.isFavorite?' is-favorite':''}">
       <button onclick="deletePlaythrough('${p.id}','${game.id}')" title="Delete" style="position:absolute;top:1rem;right:1rem;background:none;border:none;cursor:pointer;color:var(--text-muted);width:20px;height:20px;">${Icons.trash}</button>
@@ -606,13 +630,28 @@ function renderGameDetails(game) {
         ${statusBadge(p.status)}
       </div>
       <div style="font-size:.82rem;color:var(--text-muted);display:flex;gap:12px;flex-wrap:wrap;">
-        <span>Started: ${p.startDate}</span>
+        ${dateInfo}
         ${p.endDate?`<span>Ended: ${p.endDate}</span>`:''}
         ${elapsed?`<span style="color:var(--pink);font-weight:600;">${elapsed}</span>`:''}
       </div>
       ${charBlock}${reviewBlock}${actions}
     </div>`;
-  }).join('') || `<p style="color:var(--text-muted)">No routes logged yet. Start playing!</p>`;
+  }
+
+  const defaultSort = 'recent';
+  const logsHTML = sortPts(pts, defaultSort).map(buildLogEntry).join('') || `<p style="color:var(--text-muted)">No routes logged yet. Add your characters!</p>`;
+
+  const sortBar = pts.length ? `<div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap;">
+    <span style="font-size:.8rem;color:var(--text-muted);font-weight:600;">Sort:</span>
+    <select id="trail-sort" class="form-control" style="width:auto;padding:.45rem .75rem;font-size:.8rem;border-radius:10px;" onchange="window._trailSort(this.value)">
+      <option value="recent">Recently Added</option>
+      <option value="alpha-az">A → Z</option>
+      <option value="alpha-za">Z → A</option>
+      <option value="started-new">Started (Newest)</option>
+      <option value="started-old">Started (Oldest)</option>
+      <option value="status">By Status</option>
+    </select>
+  </div>` : '';
 
   viewContainer.innerHTML = `
     <div class="game-details-header">
@@ -620,19 +659,37 @@ function renderGameDetails(game) {
       <div class="game-details-info">
         <h2 class="game-details-title">${game.title}</h2>
         ${game.developer?`<div class="game-dev" style="font-size:.95rem;margin-bottom:.5rem;">${game.developer}</div>`:''}
-        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.75rem;">Platform: <strong style="color:var(--text-body);">${game.platform||'—'}</strong></p>
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.75rem;">Platform: <strong style="color:var(--text-body);">${game.platform||'—'}</strong>
+        ${game.startDate ? ` <span style="margin:0 8px;">|</span> Started: <strong style="color:var(--text-body);">${game.startDate}</strong>` : ''}</p>
         ${tagsHTML(game.tags, true) ? `<div style="margin-bottom:1rem;">${tagsHTML(game.tags,true)}</div>` : ''}
         ${game.description?`<p class="description-block">${game.description}</p>`:''}
+        ${game.notes && game.notes !== '<p><br></p>' ? `<div class="game-notes-block" style="background:var(--bg-hover);padding:1rem;border-radius:12px;margin-bottom:1.5rem;border-left:4px solid var(--accent-primary);">
+          <h4 style="margin-bottom:0;font-size:.9rem;color:var(--accent-primary);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;" onclick="const c=this.nextElementSibling;const i=this.querySelector('.toggle-icon');if(c.style.display==='none'){c.style.display='block';i.style.transform='rotate(0deg)';}else{c.style.display='none';i.style.transform='rotate(-90deg)';}">
+            <span style="display:flex;align-items:center;gap:6px;">${Icons.fileText} Personal Notes & Tips</span>
+            <span class="toggle-icon" style="transition:transform 0.2s;font-size:1rem;transform:rotate(-90deg);">▼</span>
+          </h4>
+          <div class="rich-notes-content" style="display:none;font-size:.9rem;color:var(--text-body);line-height:1.6;margin-top:.75rem;">${game.notes}</div>
+        </div>`:''}
         ${pts.length?`<div style="margin-bottom:1.5rem;"><div style="font-size:.8rem;color:var(--text-muted);margin-bottom:4px;">${completedCount}/${pts.length} routes completed</div><div class="progress-wrap"><div class="progress-fill" style="width:${progressPct}%"></div></div></div>`:''}
         <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:auto;">
           <button class="btn btn-primary" onclick="openPlaythroughModal('${game.id}')">+ New Route</button>
+          <button class="btn btn-ghost" onclick="openNotesModal('${game.id}')">${Icons.fileText} Notes</button>
           <button class="btn btn-ghost" onclick="openEditModal('${game.id}')">${Icons.edit} Edit</button>
           <button class="btn btn-danger" onclick="deleteGame('${game.id}')">${Icons.trash} Delete</button>
         </div>
       </div>
     </div>
     <h3 class="section-heading">Trail Log</h3>
-    <div class="trail-log">${logsHTML}</div>`;
+    ${sortBar}
+    <div class="trail-log" id="trail-log-container">${logsHTML}</div>`;
+
+  // Wire up the sort dropdown to re-render only the log entries
+  window._trailSort = function(mode) {
+    const container = document.getElementById('trail-log-container');
+    if (!container) return;
+    const sorted = sortPts(pts, mode).map(buildLogEntry).join('') || `<p style="color:var(--text-muted)">No routes logged yet. Add your characters!</p>`;
+    container.innerHTML = sorted;
+  };
 }
 
 // ── Route actions ─────────────────────────────────────────
@@ -662,6 +719,10 @@ window.pauseRoute = function(pid, gid) {
   const p = appData.playthroughs.find(p=>p.id===pid); if(!p) return;
   p.status='Paused'; saveData(); renderView('game-details',gid);
 };
+window.startRoute = function(pid, gid) {
+  const p = appData.playthroughs.find(p=>p.id===pid); if(!p) return;
+  p.status='Playing'; p.startDate=new Date().toISOString().split('T')[0]; saveData(); renderView('game-details',gid);
+};
 window.resumeRoute = function(pid, gid) {
   const p = appData.playthroughs.find(p=>p.id===pid); if(!p) return;
   p.status='Playing'; saveData(); renderView('game-details',gid);
@@ -675,8 +736,8 @@ function openModal(html) { modalBody.innerHTML = html; modalContainer.classList.
 // ── Start route modal ─────────────────────────────────────
 window.openPlaythroughModal = function(gid) {
   const today = new Date().toISOString().split('T')[0];
-  openModal(`<h3 style="margin-bottom:.5rem;">Start New Route</h3>
-    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1.5rem;">Track a new character or route.</p>
+  openModal(`<h3 style="margin-bottom:.5rem;">Add Route / Character</h3>
+    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:1.5rem;">Add a romanceable character or route to track.</p>
     <form id="pt-form">
       <div class="form-group"><label>Route / Character *</label><input type="text" id="pt-route" class="form-control" placeholder="e.g. Zen's Route" required></div>
       <div class="form-group"><label>Character Photo</label>
@@ -686,19 +747,27 @@ window.openPlaythroughModal = function(gid) {
         </div>
       </div>
       <div class="form-group"><label>Character Notes</label><textarea id="pt-notes" class="form-control" rows="2" placeholder="Describe the character…"></textarea></div>
-      <div class="form-group"><label>Start Date</label><input type="date" id="pt-start" class="form-control" value="${today}" required></div>
+      <div class="form-group"><label>Start playing now?</label>
+        <div class="toggle-row" style="margin-top:.5rem;">
+          <span class="toggle-label" style="font-size:.85rem;">Yes, I'm starting this route now</span>
+          <label class="toggle-switch"><input type="checkbox" id="pt-start-now" onchange="document.getElementById('pt-start-container').style.display=this.checked?'block':'none'"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <div class="form-group" id="pt-start-container" style="display:none;"><label>Start Date</label><input type="date" id="pt-start" class="form-control" value="${today}"></div>
       <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
         <button type="button" class="btn btn-ghost" style="flex:1;" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary" style="flex:2;">Start Playing</button>
+        <button type="submit" class="btn btn-primary" style="flex:2;">Add Route</button>
       </div>
     </form>`);
   document.getElementById('pt-form').onsubmit = e => {
     e.preventDefault();
+    const startNow = document.getElementById('pt-start-now').checked;
+    const startDate = startNow ? document.getElementById('pt-start').value : '';
     appData.playthroughs.push({ id:uid(), gameId:gid,
       route:document.getElementById('pt-route').value,
       characterPhotoUrl:document.getElementById('pt-photo').value,
       characterProfile:document.getElementById('pt-notes').value,
-      status:'Playing', startDate:document.getElementById('pt-start').value,
+      status: startNow ? 'Playing' : 'Not Started', startDate,
       endDate:'', isFavorite:false });
     saveData(); closeModal(); renderView('game-details',gid);
   };
@@ -826,9 +895,13 @@ window.openEditModal = function(gid) {
         <datalist id="e-plats"><option>Steam</option><option>Itch.io</option><option>Nintendo Switch</option><option>PlayStation</option><option>Mobile</option></datalist>
       </div>
       <div class="form-group"><label>Status</label>
-        <select id="e-status" class="form-control">
+        <select id="e-status" class="form-control" onchange="document.getElementById('e-start-date-container').style.display = this.value === 'Want to Play' ? 'none' : 'block'">
           ${['Want to Play','Playing','Completed','Paused','Dropped'].map(s=>`<option${g.status===s?' selected':''}>${s}</option>`).join('')}
         </select>
+      </div>
+      <div class="form-group" id="e-start-date-container" style="display:${g.status === 'Want to Play' || !g.status ? 'none' : 'block'};">
+        <label>Date Started</label>
+        <input type="date" id="e-start-date" class="form-control" value="${g.startDate || new Date().toISOString().split('T')[0]}">
       </div>
       <div class="form-group"><label>Tags</label><input type="text" id="e-tags" class="form-control" value="${(g.tags||[]).join(', ')}"></div>
       <div class="form-group"><label>Synopsis</label><textarea id="e-desc" class="form-control" rows="3">${g.description||''}</textarea></div>
@@ -845,10 +918,39 @@ window.openEditModal = function(gid) {
     g.developer = document.getElementById('e-dev').value;
     g.platform = document.getElementById('e-platform').value;
     g.status = document.getElementById('e-status').value;
+    g.startDate = g.status !== 'Want to Play' ? document.getElementById('e-start-date').value : '';
     g.tags = document.getElementById('e-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
     g.description = document.getElementById('e-desc').value;
     saveData(); closeModal(); renderView('game-details',gid);
   };
+};
+
+// ── Notes modal ───────────────────────────────────────────
+window.openNotesModal = function(gid) {
+  const g = appData.games.find(g=>g.id===gid); if(!g) return;
+  openModal(`
+    <h3 style="margin-bottom:1rem;display:flex;align-items:center;gap:8px;">${Icons.fileText} Personal Notes & Tips</h3>
+    <div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">
+      <div style="background:var(--bg-hover); padding:8px; display:flex; gap:8px; border-bottom:1px solid var(--border-color); flex-wrap:wrap;">
+        <button type="button" class="btn btn-ghost" style="padding:4px 8px;font-weight:bold;min-width:32px;" onmousedown="event.preventDefault(); document.execCommand('bold',false,null)" title="Bold">B</button>
+        <button type="button" class="btn btn-ghost" style="padding:4px 8px;font-style:italic;min-width:32px;" onmousedown="event.preventDefault(); document.execCommand('italic',false,null)" title="Italic">I</button>
+        <button type="button" class="btn btn-ghost" style="padding:4px 8px;text-decoration:underline;min-width:32px;" onmousedown="event.preventDefault(); document.execCommand('underline',false,null)" title="Underline">U</button>
+        <div style="width:1px; background:var(--border-color); margin:0 4px;"></div>
+        <button type="button" class="btn btn-ghost" style="padding:4px 8px;" onmousedown="event.preventDefault(); document.execCommand('insertUnorderedList',false,null)" title="Bullet List">• List</button>
+        <button type="button" class="btn btn-ghost" style="padding:4px 8px;" onmousedown="event.preventDefault(); document.execCommand('insertOrderedList',false,null)" title="Numbered List">1. List</button>
+      </div>
+      <div id="rich-notes-editor" contenteditable="true" style="min-height:200px; max-height:400px; overflow-y:auto; padding:12px; font-size:.95rem; color:var(--text-body); outline:none; line-height:1.6;">${g.notes || '<p><br></p>'}</div>
+    </div>
+    <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
+      <button type="button" class="btn btn-ghost" style="flex:1;" onclick="closeModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" style="flex:2;" onclick="saveNotes('${gid}')">${Icons.check} Save Notes</button>
+    </div>
+  `);
+};
+window.saveNotes = function(gid) {
+  const g = appData.games.find(g=>g.id===gid); if(!g) return;
+  g.notes = document.getElementById('rich-notes-editor').innerHTML;
+  saveData(); closeModal(); renderView('game-details',gid);
 };
 
 // ── Profile / Settings modal ──────────────────────────────
@@ -926,13 +1028,37 @@ window.importData = function(e) {
   reader.onload = ev => {
     try {
       const imported = JSON.parse(ev.target.result);
-      if (!imported.games) throw new Error('Invalid file');
-      if (confirm('This will replace all your current data. Continue?')) {
-        appData = imported;
-        if (!appData.settings) appData.settings = { theme:'light', backgroundUrl:'' };
-        saveData(); closeModal(); renderView('dashboard');
+      if (!imported || !imported.games) {
+        openModal('<div style="text-align:center;padding:2rem;"><h3>Invalid Backup</h3><p style="color:var(--text-muted);margin-top:.5rem;">Missing games data.</p><button class="btn btn-primary" style="margin-top:1.5rem;" onclick="closeModal()">Close</button></div>');
+        return;
       }
-    } catch { alert('Invalid backup file.'); }
+      openModal(`
+        <div style="text-align:center;padding:1.5rem .5rem;">
+          <div style="font-size:2.5rem;margin-bottom:1rem;">⚠️</div>
+          <h3 style="color:var(--pink);margin-bottom:.5rem;">Replace Library?</h3>
+          <p style="color:var(--text-muted);font-size:.9rem;">This will overwrite your current library with the imported data. Are you sure you want to continue?</p>
+          <div style="display:flex;gap:1rem;margin-top:2rem;">
+            <button class="btn btn-ghost" style="flex:1;" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" style="flex:1;background:var(--pink);" id="confirm-import-btn">Yes, Import</button>
+          </div>
+        </div>
+      `);
+      document.getElementById('confirm-import-btn').onclick = () => {
+        // Merge with defaults to ensure no missing keys crash the app
+        appData = {
+          games: imported.games || [],
+          playthroughs: imported.playthroughs || [],
+          reviews: imported.reviews || [],
+          settings: { ...defaults.settings, ...(imported.settings || {}) }
+        };
+        saveData(); 
+        closeModal(); 
+        renderView('dashboard');
+      };
+    } catch (err) { 
+      console.error('Import error:', err);
+      openModal('<div style="text-align:center;padding:2rem;"><h3>Import Error</h3><p style="color:var(--text-muted);margin-top:.5rem;">Failed to parse backup file. Ensure it is a valid JSON.</p><button class="btn btn-primary" style="margin-top:1.5rem;" onclick="closeModal()">Close</button></div>');
+    }
   };
   reader.readAsText(file);
 };
