@@ -177,6 +177,7 @@ function renderDashboard() {
   const done  = appData.playthroughs.filter(p => p.status==='Completed').length;
   const favs  = appData.playthroughs.filter(p => p.isFavorite);
   const playing = appData.playthroughs.filter(p => p.status==='Playing').length;
+  const backlogCount = appData.games.filter(g => (g.status||'Want to Play') === 'Want to Play').length;
 
   const recent = appData.playthroughs.slice().reverse().slice(0,5).map(p => {
     const g = appData.games.find(g => g.id===p.gameId);
@@ -194,11 +195,30 @@ function renderDashboard() {
     if (!g) return '';
     const img = p.characterPhotoUrl || g.coverUrl || 'https://via.placeholder.com/50';
     return `<div class="log-entry" onclick="renderView('game-details','${g.id}')" title="${g.title} — ${p.route}" style="cursor:pointer;padding:.85rem;margin-bottom:.75rem;display:flex;align-items:center;gap:12px;">
-      <img src="${img}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--pink);flex-shrink:0;">
-      <div><div style="font-family:'Cormorant Garamond',serif;font-weight:700;color:var(--text-h);">${g.title}</div>
+      <img src="${img}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--accent-primary);flex-shrink:0;">
+      <div><div style="font-family:'Playfair Display',serif;font-weight:700;color:var(--text-primary);">${g.title}</div>
       <div style="font-size:.8rem;color:var(--text-muted);">${p.route}</div></div>
     </div>`;
   }).join('') || `<p style="color:var(--text-muted)">No favorites yet.</p>`;
+
+  // Milestones / achievements
+  const milestones = [];
+  if (total >= 1) milestones.push({icon:'📖', label:'First VN added!'});
+  if (total >= 10) milestones.push({icon:'📚', label:'10 VNs collected!'});
+  if (total >= 25) milestones.push({icon:'🏛️', label:'25 VNs — True collector!'});
+  if (done >= 1) milestones.push({icon:'🏁', label:'First route completed!'});
+  if (done >= 10) milestones.push({icon:'🎖️', label:'10 routes completed!'});
+  if (done >= 25) milestones.push({icon:'👑', label:'25 routes — Route royalty!'});
+  if (favs.length >= 5) milestones.push({icon:'💕', label:'5 favorite routes!'});
+  const revCount = appData.reviews.length;
+  if (revCount >= 5) milestones.push({icon:'✍️', label:'5 reviews written!'});
+  if (revCount >= 15) milestones.push({icon:'📝', label:'15 reviews — Critic!'});
+
+  const milestonesHTML = milestones.length ? `
+    <div style="flex:1;">
+      <h3 class="section-heading">🏆 Milestones</h3>
+      <div class="milestones-list">${milestones.map(m => `<div class="milestone-pill">${m.icon} ${m.label}</div>`).join('')}</div>
+    </div>` : '';
 
   viewContainer.innerHTML = `
     <div class="stats-grid">
@@ -206,64 +226,213 @@ function renderDashboard() {
       <div class="stat-card"><span class="stat-title">Currently Playing</span><span class="stat-value">${playing}</span></div>
       <div class="stat-card"><span class="stat-title">Routes Completed</span><span class="stat-value">${done}</span></div>
       <div class="stat-card"><span class="stat-title">Fav Routes</span><span class="stat-value">${favs.length}</span></div>
+      <div class="stat-card"><span class="stat-title">Backlog</span><span class="stat-value">${backlogCount}</span></div>
     </div>
-    <div style="display:flex;gap:2rem;">
-      <div style="flex:2;">
+    <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+      <div style="flex:2;min-width:280px;">
         <h3 class="section-heading">Recent Activity</h3>
         <div class="trail-log">${recent}</div>
       </div>
-      <div style="flex:1;">
+      <div style="flex:1;min-width:220px;">
         <h3 class="section-heading">Favorite Routes</h3>
         ${favCards}
+        ${milestonesHTML}
       </div>
     </div>`;
 }
 
 // ── Library ───────────────────────────────────────────────
-let libSearch = '', libPlatform = 'All', libStatus = 'All';
+let libSearch = '', libPlatform = 'All', libStatus = 'All', libViewMode = localStorage.getItem('vnLibViewMode') || 'Grid M';
+let libSort = localStorage.getItem('vnLibSort') || 'Recently Added';
+
+function getGameAvgRating(gid) {
+  const pts = appData.playthroughs.filter(p => p.gameId === gid);
+  const pids = pts.map(p => p.id);
+  const revs = appData.reviews.filter(r => pids.includes(r.playthroughId) && r.rating > 0);
+  if (!revs.length) return 0;
+  return revs.reduce((s,r) => s+r.rating, 0) / revs.length;
+}
+
+function getGameRouteCount(gid) {
+  return appData.playthroughs.filter(p => p.gameId === gid).length;
+}
+
+function getGameCompletedCount(gid) {
+  return appData.playthroughs.filter(p => p.gameId === gid && p.status === 'Completed').length;
+}
+
+function getLastPlayedDate(gid) {
+  const pts = appData.playthroughs.filter(p => p.gameId === gid);
+  if (!pts.length) return '';
+  return pts.reduce((latest, p) => {
+    const d = p.endDate || p.startDate || '';
+    return d > latest ? d : latest;
+  }, '');
+}
+
+function sortGames(games) {
+  const sorted = [...games];
+  switch(libSort) {
+    case 'A-Z': return sorted.sort((a,b) => a.title.localeCompare(b.title));
+    case 'Z-A': return sorted.sort((a,b) => b.title.localeCompare(a.title));
+    case 'Recently Added': return sorted.reverse();
+    case 'Recently Played': return sorted.sort((a,b) => {
+      const da = getLastPlayedDate(a.id), db = getLastPlayedDate(b.id);
+      if (!da && !db) return 0; if (!da) return 1; if (!db) return -1;
+      return db.localeCompare(da);
+    });
+    case 'Highest Rated': return sorted.sort((a,b) => getGameAvgRating(b.id) - getGameAvgRating(a.id));
+    case 'Most Routes': return sorted.sort((a,b) => getGameRouteCount(b.id) - getGameRouteCount(a.id));
+    default: return sorted;
+  }
+}
 
 function renderLibrary() {
   const platforms = [...new Set(appData.games.map(g=>g.platform).filter(Boolean))];
+  
+  // Currently playing section
+  const nowPlaying = appData.games.filter(g => {
+    const pts = appData.playthroughs.filter(p => p.gameId === g.id && p.status === 'Playing');
+    return pts.length > 0;
+  });
+  const nowPlayingHTML = nowPlaying.length ? `
+    <div class="now-playing-section">
+      <h3 class="section-heading" style="display:flex;align-items:center;gap:8px;">▶ Currently Playing <span class="now-playing-count">${nowPlaying.length}</span></h3>
+      <div class="now-playing-strip">${nowPlaying.map(g => {
+        const activeRoutes = appData.playthroughs.filter(p => p.gameId === g.id && p.status === 'Playing');
+        return `<div class="now-playing-card" onclick="renderView('game-details','${g.id}')">
+          <img src="${g.coverUrl||'https://via.placeholder.com/80x110?text=?'}" alt="${g.title}">
+          <div class="now-playing-info">
+            <div class="now-playing-title">${g.title}</div>
+            <div class="now-playing-route">${activeRoutes.map(p=>p.route).join(', ')}</div>
+          </div>
+        </div>`;
+      }).join('')}</div>
+    </div>` : '';
+
+  // Backlog pick button
+  const backlogGames = appData.games.filter(g => (g.status||'Want to Play') === 'Want to Play');
+  const randomPickHTML = backlogGames.length >= 2 ? `<button class="btn btn-ghost random-pick-btn" id="random-pick-btn" title="Pick a random game from your backlog">🎲 Random Pick</button>` : '';
+
   viewContainer.innerHTML = `
+    ${nowPlayingHTML}
     <div class="filter-bar">
       <input type="text" id="lib-search" class="filter-input" style="flex:2;" placeholder="Search title, dev, tag…" value="${libSearch}">
       <select id="lib-platform" class="filter-input"><option value="All">All Platforms</option>${platforms.map(p=>`<option ${libPlatform===p?'selected':''}>${p}</option>`).join('')}</select>
       <select id="lib-status" class="filter-input">
         ${['All','Want to Play','Playing','Completed','Dropped','Paused'].map(s=>`<option value="${s}" ${libStatus===s?'selected':''}>${s}</option>`).join('')}
       </select>
+      <select id="lib-sort" class="filter-input">
+        ${['Recently Added','A-Z','Z-A','Recently Played','Highest Rated','Most Routes'].map(s=>`<option value="${s}" ${libSort===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+      <select id="lib-view" class="filter-input">
+        <option value="List" ${libViewMode==='List'?'selected':''}>☰ List</option>
+        <option value="Grid S" ${libViewMode==='Grid S'?'selected':''}>▦ Grid S</option>
+        <option value="Grid M" ${libViewMode==='Grid M'?'selected':''}>▦ Grid M</option>
+        <option value="Grid L" ${libViewMode==='Grid L'?'selected':''}>▦ Grid L</option>
+      </select>
+      ${randomPickHTML}
     </div>
+    <div id="lib-count" class="lib-count"></div>
     <div id="lib-grid"></div>`;
   document.getElementById('lib-search').oninput = e => { libSearch = e.target.value.toLowerCase(); drawGrid(); };
   document.getElementById('lib-platform').onchange = e => { libPlatform = e.target.value; drawGrid(); };
   document.getElementById('lib-status').onchange = e => { libStatus = e.target.value; drawGrid(); };
+  document.getElementById('lib-sort').onchange = e => {
+    libSort = e.target.value;
+    localStorage.setItem('vnLibSort', libSort);
+    drawGrid();
+  };
+  document.getElementById('lib-view').onchange = e => { 
+    libViewMode = e.target.value; 
+    localStorage.setItem('vnLibViewMode', libViewMode);
+    drawGrid(); 
+  };
+  const rpBtn = document.getElementById('random-pick-btn');
+  if (rpBtn) rpBtn.onclick = () => randomPick();
   drawGrid();
 }
 
+function randomPick() {
+  const backlog = appData.games.filter(g => (g.status||'Want to Play') === 'Want to Play');
+  if (!backlog.length) return;
+  const pick = backlog[Math.floor(Math.random() * backlog.length)];
+  openModal(`
+    <div style="text-align:center;">
+      <div style="font-size:2.5rem;margin-bottom:.75rem;">🎲</div>
+      <h3 style="margin-bottom:.5rem;">You should play…</h3>
+      <div style="margin:1.5rem auto;">
+        <img src="${pick.coverUrl||'https://via.placeholder.com/180x260?text=?'}" alt="${pick.title}" style="width:160px;height:230px;object-fit:cover;border-radius:16px;box-shadow:var(--shadow-md);">
+      </div>
+      <h2 style="font-family:'Playfair Display',serif;color:var(--accent-primary);margin-bottom:.5rem;">${pick.title}</h2>
+      ${pick.developer ? `<p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:.5rem;">${pick.developer}</p>` : ''}
+      ${pick.tags && pick.tags.length ? `<div style="margin-bottom:1rem;">${tagsHTML(pick.tags, true)}</div>` : ''}
+      <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="randomPick()">🎲 Re-roll</button>
+        <button class="btn btn-primary" style="flex:2;" onclick="closeModal();renderView('game-details','${pick.id}')">Let's Go!</button>
+      </div>
+    </div>`);
+}
+window.randomPick = randomPick;
+
 function drawGrid() {
   const el = document.getElementById('lib-grid');
+  const countEl = document.getElementById('lib-count');
   if (!el) return;
   if (!appData.games.length) {
     el.innerHTML = `<div class="empty-state"><h3>Your library is empty!</h3><p>Add your first visual novel to get started.</p><button class="btn btn-primary" onclick="renderView('add-game')">Add a VN</button></div>`;
+    if (countEl) countEl.textContent = '';
     return;
   }
-  let games = appData.games;
+  let games = [...appData.games];
   if (libPlatform !== 'All') games = games.filter(g => g.platform === libPlatform);
   if (libStatus !== 'All') games = games.filter(g => (g.status||'Want to Play') === libStatus);
   if (libSearch) games = games.filter(g =>
     g.title.toLowerCase().includes(libSearch) ||
     (g.developer||'').toLowerCase().includes(libSearch) ||
     (g.tags||[]).some(t => t.toLowerCase().includes(libSearch)));
+  
+  if (countEl) countEl.textContent = `Showing ${games.length} of ${appData.games.length} games`;
+  
   if (!games.length) { el.innerHTML = `<p style="color:var(--text-muted);padding:2rem 0;">No games match your filters.</p>`; return; }
-  el.innerHTML = `<div class="library-grid">${games.map(g => `
+  
+  games = sortGames(games);
+  
+  let viewClass = 'library-grid';
+  if (libViewMode === 'Grid S') viewClass = 'library-grid-s';
+  else if (libViewMode === 'Grid L') viewClass = 'library-grid-l';
+  else if (libViewMode === 'List') viewClass = 'library-list';
+  
+  el.innerHTML = `<div class="${viewClass}">${games.map(g => {
+    const routeCount = getGameRouteCount(g.id);
+    const completedCount = getGameCompletedCount(g.id);
+    const avgRating = getGameAvgRating(g.id);
+    const ratingStars = avgRating > 0 ? '★'.repeat(Math.round(avgRating)) + '☆'.repeat(5 - Math.round(avgRating)) : '';
+    const statusClass = {'Playing':'status-playing','Completed':'status-completed','Dropped':'status-dropped','Paused':'status-paused'}[g.status] || '';
+    
+    // Progress badge
+    const progressBadge = routeCount > 0 ? `<span class="card-badge card-badge-routes" title="${completedCount}/${routeCount} routes completed">${completedCount}/${routeCount}</span>` : '';
+    const ratingBadge = avgRating > 0 ? `<span class="card-badge card-badge-rating" title="Average rating: ${avgRating.toFixed(1)}">${avgRating.toFixed(1)} ★</span>` : '';
+    const statusMini = g.status && g.status !== 'Want to Play' ? `<span class="status-badge ${statusClass}" style="font-size:.6rem;padding:2px 8px;">${g.status}</span>` : '';
+    
+    return `
     <div class="game-card" onclick="renderView('game-details','${g.id}')">
-      <img class="game-cover" src="${g.coverUrl||'https://via.placeholder.com/300x400?text=No+Cover'}" alt="${g.title}">
+      <div class="game-cover-wrap">
+        <img class="game-cover" src="${g.coverUrl||'https://via.placeholder.com/300x400?text=No+Cover'}" alt="${g.title}">
+        <div class="card-badges">${progressBadge}${ratingBadge}</div>
+      </div>
       <div class="game-info">
         <div class="game-title">${g.title}</div>
         ${g.developer ? `<span class="game-dev">${g.developer}</span>` : ''}
-        <span class="game-platform">${g.platform||'—'}</span>
+        <div class="game-meta-row">
+          <span class="game-platform">${g.platform||'—'}</span>
+          ${statusMini}
+        </div>
         <div style="margin-top:5px;">${tagsHTML(g.tags)}</div>
+        ${ratingStars ? `<div class="card-rating-stars">${ratingStars}</div>` : ''}
       </div>
-    </div>`).join('')}</div>`;
+    </div>`;
+  }).join('')}</div>`;
 }
 
 // ── Add Game ──────────────────────────────────────────────

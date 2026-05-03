@@ -20,20 +20,37 @@
 | Feature | Description |
 |---|---|
 | 📚 **Game Library** | Add VNs with cover art, developer, platform, synopsis, and custom tags |
+| 🔀 **Advanced Sorting** | Sort by Alphabetical (A-Z/Z-A), Recently Added, Recently Played, Highest Rated, or Most Routes |
+| 🖼️ **Multi-View Modes** | Toggle between **List View**, **Grid S**, **Grid M** (default), and **Grid L** layouts |
+| 🎲 **Random Pick** | Let the app choose your next adventure from your backlog with a fun randomizer |
+| ▶ **Now Playing Strip** | Quick-access shelf at the top of your library for games you're currently reading |
+| 🏆 **Milestones** | Track your progress with achievement-style badges for collection size and completions |
+| 🏷️ **Card Badges** | Instant visual feedback on game cards showing route progress and average ratings |
 | 🗺️ **Trail Log** | Track every route/character playthrough with start & end dates |
 | 💖 **Route Favorites** | Heart your favorite routes — they appear on your Dashboard |
 | ⭐ **Letterboxd-style Reviews** | 5-star ratings, spoiler-blurred text, and a "quick review" on completion |
 | 👤 **Character Profiles** | Attach a photo and personal notes to any route log |
 | 🎨 **Dark & Light Mode** | Toggleable *Coquette* (light) and *Chic Noir* (dark) themes |
 | 🖼️ **Custom Backgrounds** | Set any image URL as a personal background wallpaper |
-| 🔍 **Smart Library Filters** | Filter by platform, status (Playing / Completed / Dropped…), or search by title, dev, or tag |
-| 📊 **Analytics Dashboard** | Tag distribution, platform breakdown, rating charts, average completion time, and more |
-| ✂️ **Image Cropper** | Crop cover art from URL or upload from local files — no external tools needed |
-| 👤 **Custom Profile** | Upload your own avatar photo and set a custom tagline |
-| 📈 **Completion Progress Bar** | Per-game route completion bar in the game detail view |
+| 🔍 **Smart Library Filters** | Filter by platform, status, or search by title, dev, or tag |
+| 📊 **Analytics Dashboard** | Tag distribution, platform breakdown, rating charts, and completion stats |
+| ✂️ **Image Cropper** | Crop cover art from URL or upload from local files directly in the app |
 | 💾 **Data Export / Import** | Backup and restore your entire library as a `.json` file |
-| 📌 **Collapsible Sidebar** | Collapse the nav to icon-only mode for more screen space |
+| 📌 **Collapsible Sidebar** | Save screen space with an elegant icon-only sidebar mode |
+| 📈 **Library Stats** | Live counters showing exactly how many games are in your view and backlog |
 | 🍁 **Falling Leaves** | Animated 🍁🍂🍃 leaves gently float across every page |
+
+---
+
+## 📖 New Library Features
+
+We've recently upgraded the library experience to make managing large collections even easier:
+
+- **View Modes**: Choose **List View** for a compact, text-heavy layout, or **Grid L** to see your covers in high-definition glory. **Grid S** is perfect for those with massive backlogs.
+- **Backlog Randomizer**: Can't decide what to play next? Click the 🎲 icon in your library to let fate decide!
+- **Persistent Settings**: Your preferred view mode and sort order are saved automatically to your device.
+- **Route Tracking**: Card badges now show your route progress (e.g., `2/5`) at a glance, alongside your average rating for that VN.
+- **Milestones**: Check your dashboard to see your latest achievements as your collection and completion counts grow.
 
 ---
 
