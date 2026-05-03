@@ -176,8 +176,30 @@ function renderDashboard() {
   const total = appData.games.length;
   const done  = appData.playthroughs.filter(p => p.status==='Completed').length;
   const favs  = appData.playthroughs.filter(p => p.isFavorite);
-  const playing = appData.playthroughs.filter(p => p.status==='Playing').length;
-  const backlogCount = appData.games.filter(g => (g.status||'Want to Play') === 'Want to Play').length;
+  const playingPts = appData.playthroughs.filter(p => p.status==='Playing').length;
+  const playingGames = appData.games.filter(g => 
+    (g.status||'') === 'Playing' || appData.playthroughs.some(p => p.gameId === g.id && p.status === 'Playing')
+  );
+  const playing = playingGames.length;
+
+  // Now Playing section
+  const nowPlayingHTML = playingGames.length ? `
+    <div class="now-playing-section">
+      <h3 class="section-heading" style="display:flex;align-items:center;gap:8px;">▶ Currently Playing <span class="now-playing-count">${playingGames.length}</span></h3>
+      <div class="now-playing-strip">${playingGames.map(g => {
+        const activeRoutes = appData.playthroughs.filter(p => p.gameId === g.id && p.status === 'Playing');
+        const routeText = activeRoutes.length ? activeRoutes.map(p=>p.route).join(', ') : 'No route started yet';
+        const startText = activeRoutes.length ? `Started ${activeRoutes[0]?.startDate || '—'}` : '';
+        return `<div class="now-playing-card" onclick="renderView('game-details','${g.id}')">
+          <img src="${g.coverUrl||'https://via.placeholder.com/80x110?text=?'}" alt="${g.title}">
+          <div class="now-playing-info">
+            <div class="now-playing-title">${g.title}</div>
+            <div class="now-playing-route">${routeText}</div>
+            ${startText ? `<div class="now-playing-route" style="font-size:.7rem;color:var(--text-muted);">${startText}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('')}</div>
+    </div>` : '';
 
   const recent = appData.playthroughs.slice().reverse().slice(0,5).map(p => {
     const g = appData.games.find(g => g.id===p.gameId);
@@ -201,32 +223,69 @@ function renderDashboard() {
     </div>`;
   }).join('') || `<p style="color:var(--text-muted)">No favorites yet.</p>`;
 
-  // Milestones / achievements
+  // Milestones / achievements — with real data
   const milestones = [];
-  if (total >= 1) milestones.push({icon:'📖', label:'First VN added!'});
-  if (total >= 10) milestones.push({icon:'📚', label:'10 VNs collected!'});
-  if (total >= 25) milestones.push({icon:'🏛️', label:'25 VNs — True collector!'});
-  if (done >= 1) milestones.push({icon:'🏁', label:'First route completed!'});
-  if (done >= 10) milestones.push({icon:'🎖️', label:'10 routes completed!'});
-  if (done >= 25) milestones.push({icon:'👑', label:'25 routes — Route royalty!'});
-  if (favs.length >= 5) milestones.push({icon:'💕', label:'5 favorite routes!'});
+  
+  // First VN added
+  if (appData.games.length >= 1) {
+    const first = appData.games[0];
+    milestones.push({icon:'📖', label:'First VN added', detail:`${first.title}`, clickId: first.id});
+  }
+  // 10 VNs
+  if (appData.games.length >= 10) {
+    milestones.push({icon:'📚', label:'10 VNs collected', detail:`${appData.games.length} total in library`});
+  }
+  // 25 VNs
+  if (appData.games.length >= 25) {
+    milestones.push({icon:'🏛️', label:'True collector', detail:`${appData.games.length} VNs and counting`});
+  }
+  // First route completed
+  const firstCompleted = appData.playthroughs.find(p => p.status === 'Completed');
+  if (firstCompleted) {
+    const fcGame = appData.games.find(g => g.id === firstCompleted.gameId);
+    milestones.push({icon:'🏁', label:'First route completed', detail:`${fcGame ? fcGame.title + ' — ' : ''}${firstCompleted.route}${firstCompleted.endDate ? ' · ' + firstCompleted.endDate : ''}`, clickId: fcGame?.id});
+  }
+  // 10 routes completed
+  const completedPts = appData.playthroughs.filter(p => p.status === 'Completed');
+  if (completedPts.length >= 10) {
+    milestones.push({icon:'🎖️', label:'10 routes completed', detail:`${completedPts.length} routes done so far`});
+  }
+  // 25 routes completed
+  if (completedPts.length >= 25) {
+    milestones.push({icon:'👑', label:'Route royalty', detail:`${completedPts.length} routes conquered`});
+  }
+  // 5 favorites
+  if (favs.length >= 5) {
+    const topFav = favs[0];
+    const topFavGame = appData.games.find(g => g.id === topFav?.gameId);
+    milestones.push({icon:'💕', label:'5 favorite routes', detail:`Including ${topFavGame ? topFavGame.title + ' — ' : ''}${topFav?.route || ''}`});
+  }
+  // Reviews
   const revCount = appData.reviews.length;
-  if (revCount >= 5) milestones.push({icon:'✍️', label:'5 reviews written!'});
-  if (revCount >= 15) milestones.push({icon:'📝', label:'15 reviews — Critic!'});
+  if (revCount >= 5) {
+    milestones.push({icon:'✍️', label:'5 reviews written', detail:`${revCount} total reviews`});
+  }
+  if (revCount >= 15) {
+    milestones.push({icon:'📝', label:'Certified critic', detail:`${revCount} reviews and counting`});
+  }
 
   const milestonesHTML = milestones.length ? `
-    <div style="flex:1;">
+    <div style="margin-top:1.5rem;">
       <h3 class="section-heading">🏆 Milestones</h3>
-      <div class="milestones-list">${milestones.map(m => `<div class="milestone-pill">${m.icon} ${m.label}</div>`).join('')}</div>
+      <div class="milestones-list">${milestones.map(m => `
+        <div class="milestone-pill${m.clickId ? ' milestone-clickable' : ''}" ${m.clickId ? `onclick="renderView('game-details','${m.clickId}')" style="cursor:pointer;"` : ''}>
+          <div class="milestone-header">${m.icon} ${m.label}</div>
+          <div class="milestone-detail">${m.detail}</div>
+        </div>`).join('')}</div>
     </div>` : '';
 
   viewContainer.innerHTML = `
+    ${nowPlayingHTML}
     <div class="stats-grid">
       <div class="stat-card"><span class="stat-title">Total VNs</span><span class="stat-value">${total}</span></div>
       <div class="stat-card"><span class="stat-title">Currently Playing</span><span class="stat-value">${playing}</span></div>
       <div class="stat-card"><span class="stat-title">Routes Completed</span><span class="stat-value">${done}</span></div>
       <div class="stat-card"><span class="stat-title">Fav Routes</span><span class="stat-value">${favs.length}</span></div>
-      <div class="stat-card"><span class="stat-title">Backlog</span><span class="stat-value">${backlogCount}</span></div>
     </div>
     <div style="display:flex;gap:2rem;flex-wrap:wrap;">
       <div style="flex:2;min-width:280px;">
@@ -291,31 +350,30 @@ function renderLibrary() {
   const platforms = [...new Set(appData.games.map(g=>g.platform).filter(Boolean))];
   
   // Currently playing section
-  const nowPlaying = appData.games.filter(g => {
-    const pts = appData.playthroughs.filter(p => p.gameId === g.id && p.status === 'Playing');
-    return pts.length > 0;
-  });
-  const nowPlayingHTML = nowPlaying.length ? `
-    <div class="now-playing-section">
-      <h3 class="section-heading" style="display:flex;align-items:center;gap:8px;">▶ Currently Playing <span class="now-playing-count">${nowPlaying.length}</span></h3>
-      <div class="now-playing-strip">${nowPlaying.map(g => {
-        const activeRoutes = appData.playthroughs.filter(p => p.gameId === g.id && p.status === 'Playing');
-        return `<div class="now-playing-card" onclick="renderView('game-details','${g.id}')">
-          <img src="${g.coverUrl||'https://via.placeholder.com/80x110?text=?'}" alt="${g.title}">
-          <div class="now-playing-info">
-            <div class="now-playing-title">${g.title}</div>
-            <div class="now-playing-route">${activeRoutes.map(p=>p.route).join(', ')}</div>
-          </div>
-        </div>`;
-      }).join('')}</div>
-    </div>` : '';
+  // const nowPlaying = appData.games.filter(g => 
+  //   (g.status||'') === 'Playing' || appData.playthroughs.some(p => p.gameId === g.id && p.status === 'Playing')
+  // );
+  // const nowPlayingHTML = nowPlaying.length ? `
+  //   <div class="now-playing-section">
+  //     <h3 class="section-heading" style="display:flex;align-items:center;gap:8px;">▶ Currently Playing <span class="now-playing-count">${nowPlaying.length}</span></h3>
+  //     <div class="now-playing-strip">${nowPlaying.map(g => {
+  //       const activeRoutes = appData.playthroughs.filter(p => p.gameId === g.id && p.status === 'Playing');
+  //       return `<div class="now-playing-card" onclick="renderView('game-details','${g.id}')">
+  //         <img src="${g.coverUrl||'https://via.placeholder.com/80x110?text=?'}" alt="${g.title}">
+  //         <div class="now-playing-info">
+  //           <div class="now-playing-title">${g.title}</div>
+  //           <div class="now-playing-route">${activeRoutes.length ? activeRoutes.map(p=>p.route).join(', ') : 'No route started yet'}</div>
+  //         </div>
+  //       </div>`;
+  //     }).join('')}</div>
+  //   </div>` : '';
 
   // Backlog pick button
   const backlogGames = appData.games.filter(g => (g.status||'Want to Play') === 'Want to Play');
   const randomPickHTML = backlogGames.length >= 2 ? `<button class="btn btn-ghost random-pick-btn" id="random-pick-btn" title="Pick a random game from your backlog">🎲 Random Pick</button>` : '';
 
   viewContainer.innerHTML = `
-    ${nowPlayingHTML}
+    ${'' /* nowPlayingHTML */}
     <div class="filter-bar">
       <input type="text" id="lib-search" class="filter-input" style="flex:2;" placeholder="Search title, dev, tag…" value="${libSearch}">
       <select id="lib-platform" class="filter-input"><option value="All">All Platforms</option>${platforms.map(p=>`<option ${libPlatform===p?'selected':''}>${p}</option>`).join('')}</select>
@@ -973,115 +1031,196 @@ window.openCropper = function(imgUrl, callback) {
 };
 
 // ── Analytics ─────────────────────────────────────────────
+let analyticsFilter = { period: 'all', platform: 'All', tag: 'All' };
+
 function renderAnalytics() {
-  const games = appData.games;
-  const pts = appData.playthroughs;
-  const revs = appData.reviews;
+  const platforms = ['All', ...new Set(appData.games.map(g=>g.platform).filter(Boolean))];
+  const allTags = ['All', ...getAllTags()];
+
+  viewContainer.innerHTML = `
+    <div class="analytics-filter-bar">
+      <select id="an-period" class="filter-input">
+        <option value="all" ${analyticsFilter.period==='all'?'selected':''}>All Time</option>
+        <option value="30" ${analyticsFilter.period==='30'?'selected':''}>Last 30 Days</option>
+        <option value="90" ${analyticsFilter.period==='90'?'selected':''}>Last 90 Days</option>
+        <option value="365" ${analyticsFilter.period==='365'?'selected':''}>This Year</option>
+      </select>
+      <select id="an-platform" class="filter-input">
+        ${platforms.map(p=>`<option value="${p}" ${analyticsFilter.platform===p?'selected':''}>${p === 'All' ? 'All Platforms' : p}</option>`).join('')}
+      </select>
+      <select id="an-tag" class="filter-input">
+        ${allTags.map(t=>`<option value="${t}" ${analyticsFilter.tag===t?'selected':''}>${t === 'All' ? 'All Tags' : t}</option>`).join('')}
+      </select>
+    </div>
+    <div id="analytics-content"></div>`;
+
+  document.getElementById('an-period').onchange = e => { analyticsFilter.period = e.target.value; drawAnalytics(); };
+  document.getElementById('an-platform').onchange = e => { analyticsFilter.platform = e.target.value; drawAnalytics(); };
+  document.getElementById('an-tag').onchange = e => { analyticsFilter.tag = e.target.value; drawAnalytics(); };
+  drawAnalytics();
+}
+
+function drawAnalytics() {
+  const container = document.getElementById('analytics-content');
+  if (!container) return;
+
+  // Apply filters
+  let games = [...appData.games];
+  if (analyticsFilter.platform !== 'All') games = games.filter(g => g.platform === analyticsFilter.platform);
+  if (analyticsFilter.tag !== 'All') games = games.filter(g => (g.tags||[]).includes(analyticsFilter.tag));
+
+  const gameIds = new Set(games.map(g => g.id));
+  let pts = appData.playthroughs.filter(p => gameIds.has(p.gameId));
+  const ptIds = new Set(pts.map(p => p.id));
+  let revs = appData.reviews.filter(r => ptIds.has(r.playthroughId));
+
+  // Time filter on playthroughs
+  if (analyticsFilter.period !== 'all') {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - parseInt(analyticsFilter.period));
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+    pts = pts.filter(p => (p.endDate || p.startDate || '') >= cutoffStr);
+    const filteredPtIds = new Set(pts.map(p => p.id));
+    revs = revs.filter(r => filteredPtIds.has(r.playthroughId));
+  }
+
+  // Overview stats
+  const totalRoutes = pts.length;
+  const completedRoutes = pts.filter(p => p.status === 'Completed').length;
+  const favRoutes = pts.filter(p => p.isFavorite).length;
+  const avgRating = revs.length ? (revs.reduce((s,r) => s + r.rating, 0) / revs.length).toFixed(1) : '—';
 
   // Tag distribution
   const tagCounts = {};
   games.forEach(g => (g.tags||[]).forEach(t => { tagCounts[t] = (tagCounts[t]||0) + 1; }));
-  const topTags = Object.entries(tagCounts).sort((a,b) => b[1]-a[1]).slice(0, 8);
-  const tagMax = topTags.length ? Math.max(...topTags.map(t=>t[1])) : 1;
+  const topTags = Object.entries(tagCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
+  const tagMax = topTags.length ? Math.max(...topTags.map(t => t[1])) : 1;
 
   // Platform distribution
   const platCounts = {};
-  games.forEach(g => { const p = g.platform||'Unknown'; platCounts[p] = (platCounts[p]||0)+1; });
-  const platforms = Object.entries(platCounts).sort((a,b) => b[1]-a[1]);
-  const platMax = platforms.length ? Math.max(...platforms.map(p=>p[1])) : 1;
+  games.forEach(g => { const p = g.platform || 'Unknown'; platCounts[p] = (platCounts[p]||0) + 1; });
+  const platformData = Object.entries(platCounts).sort((a,b) => b[1] - a[1]);
+  const platMax = platformData.length ? Math.max(...platformData.map(p => p[1])) : 1;
 
   // Status distribution
   const statusCounts = { 'Want to Play':0, 'Playing':0, 'Completed':0, 'Paused':0, 'Dropped':0 };
-  games.forEach(g => { const s = g.status || 'Want to Play'; statusCounts[s] = (statusCounts[s]||0)+1; });
+  games.forEach(g => { const s = g.status || 'Want to Play'; statusCounts[s] = (statusCounts[s]||0) + 1; });
   const statusTotal = games.length || 1;
+  const statusColors = { 'Want to Play':'#b39ddb', 'Playing':'#64b5f6', 'Completed':'#81c784', 'Paused':'#ffb74d', 'Dropped':'#ef9a9a' };
 
   // Rating distribution
   const ratingCounts = {1:0, 2:0, 3:0, 4:0, 5:0};
   revs.forEach(r => { if (r.rating >= 1 && r.rating <= 5) ratingCounts[r.rating]++; });
   const ratingMax = Math.max(...Object.values(ratingCounts), 1);
 
-  // Average completion time
-  const completedPts = pts.filter(p => p.status==='Completed' && p.startDate && p.endDate);
-  let avgDays = 0;
-  let fastestDays = Infinity, slowestDays = 0;
+  // Completion time
+  const completedPts = pts.filter(p => p.status === 'Completed' && p.startDate && p.endDate);
+  let avgDays = 0, fastestDays = Infinity, slowestDays = 0;
   if (completedPts.length) {
-    const daysArr = completedPts.map(p => {
-      const d = Math.ceil(Math.abs(new Date(p.endDate)-new Date(p.startDate))/86400000);
-      return d;
-    });
-    avgDays = Math.round(daysArr.reduce((a,b)=>a+b,0) / daysArr.length);
+    const daysArr = completedPts.map(p => Math.ceil(Math.abs(new Date(p.endDate) - new Date(p.startDate)) / 86400000));
+    avgDays = Math.round(daysArr.reduce((a,b) => a + b, 0) / daysArr.length);
     fastestDays = Math.min(...daysArr);
     slowestDays = Math.max(...daysArr);
   }
 
   // Most productive month
   const monthCounts = {};
-  completedPts.forEach(p => {
-    const m = p.endDate.substring(0,7); // YYYY-MM
-    monthCounts[m] = (monthCounts[m]||0)+1;
-  });
-  const topMonth = Object.entries(monthCounts).sort((a,b)=>b[1]-a[1])[0];
+  completedPts.forEach(p => { const m = p.endDate.substring(0,7); monthCounts[m] = (monthCounts[m]||0) + 1; });
+  const topMonth = Object.entries(monthCounts).sort((a,b) => b[1] - a[1])[0];
   const topMonthLabel = topMonth ? new Date(topMonth[0]+'-01').toLocaleDateString('en-US',{month:'long',year:'numeric'}) + ` (${topMonth[1]})` : '—';
 
-  // Total routes
-  const totalRoutes = pts.length;
-  const completedRoutes = pts.filter(p=>p.status==='Completed').length;
-  const favRoutes = pts.filter(p=>p.isFavorite).length;
-  const avgRating = revs.length ? (revs.reduce((s,r)=>s+r.rating,0)/revs.length).toFixed(1) : '—';
+  // Top rated games
+  const gameRatings = games.map(g => {
+    const gPts = appData.playthroughs.filter(p => p.gameId === g.id);
+    const gRevs = appData.reviews.filter(r => gPts.some(p => p.id === r.playthroughId) && r.rating > 0);
+    const avg = gRevs.length ? gRevs.reduce((s,r) => s + r.rating, 0) / gRevs.length : 0;
+    return { game: g, avg, reviewCount: gRevs.length };
+  }).filter(x => x.reviewCount > 0).sort((a,b) => b.avg - a.avg).slice(0, 5);
 
-  function barChart(data, max) {
-    if (!data.length) return '<p style="color:var(--text-muted);font-size:.85rem;">No data yet.</p>';
-    return `<div class="chart-bars">${data.map(([label, count]) => {
-      const h = Math.max(4, (count/max)*120);
-      return `<div class="chart-bar"><div class="chart-bar-fill" style="height:${h}px;"><span class="bar-count">${count}</span></div><span class="chart-bar-label" title="${label}">${label}</span></div>`;
-    }).join('')}</div>`;
-  }
-
-  function distBars(data, total) {
-    return Object.entries(data).map(([label, count]) => {
-      const pct = total ? Math.round((count/total)*100) : 0;
-      return `<div class="dist-bar-wrap"><span class="dist-bar-label">${label}</span><div class="dist-bar-track"><div class="dist-bar-fill" style="width:${pct}%;"></div></div><span class="dist-bar-count">${count}</span></div>`;
+  // Helper: horizontal bar
+  function hBar(data, max, colorFn) {
+    if (!data.length) return '<p class="an-empty">No data yet.</p>';
+    return data.map(([label, count], i) => {
+      const pct = max > 0 ? Math.max(2, (count / max) * 100) : 2;
+      const color = colorFn ? colorFn(label, i) : '';
+      const style = color ? `background:${color};` : '';
+      return `<div class="hbar-row">
+        <span class="hbar-label" title="${label}">${label}</span>
+        <div class="hbar-track">
+          <div class="hbar-fill" style="width:${pct}%;${style}"></div>
+        </div>
+        <span class="hbar-count">${count}</span>
+      </div>`;
     }).join('');
   }
 
-  viewContainer.innerHTML = `
-    <div class="analytics-grid">
-      <div class="analytics-card">
-        <h4>📊 Overview</h4>
-        <div class="analytics-stat-row"><span class="analytics-stat-label">Total Games</span><span class="analytics-stat-value">${games.length}</span></div>
-        <div class="analytics-stat-row"><span class="analytics-stat-label">Total Routes Logged</span><span class="analytics-stat-value">${totalRoutes}</span></div>
-        <div class="analytics-stat-row"><span class="analytics-stat-label">Routes Completed</span><span class="analytics-stat-value">${completedRoutes}</span></div>
-        <div class="analytics-stat-row"><span class="analytics-stat-label">Favorite Routes</span><span class="analytics-stat-value">${favRoutes}</span></div>
-        <div class="analytics-stat-row"><span class="analytics-stat-label">Reviews Written</span><span class="analytics-stat-value">${revs.length}</span></div>
-        <div class="analytics-stat-row"><span class="analytics-stat-label">Average Rating</span><span class="analytics-stat-value">${avgRating} ★</span></div>
+  // Status donut segments
+  const statusEntries = Object.entries(statusCounts).filter(([,c]) => c > 0);
+  const statusSegments = statusEntries.map(([label, count]) => {
+    const pct = Math.round((count / statusTotal) * 100);
+    return `<div class="status-segment">
+      <div class="status-segment-bar" style="background:${statusColors[label]};width:${Math.max(pct, 4)}%;"></div>
+      <div class="status-segment-info">
+        <span class="status-segment-label">${label}</span>
+        <span class="status-segment-value">${count} <small>(${pct}%)</small></span>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="an-stats-row">
+      <div class="an-stat"><span class="an-stat-num">${games.length}</span><span class="an-stat-label">Games</span></div>
+      <div class="an-stat"><span class="an-stat-num">${totalRoutes}</span><span class="an-stat-label">Routes</span></div>
+      <div class="an-stat"><span class="an-stat-num">${completedRoutes}</span><span class="an-stat-label">Completed</span></div>
+      <div class="an-stat"><span class="an-stat-num">${favRoutes}</span><span class="an-stat-label">Favorites</span></div>
+      <div class="an-stat"><span class="an-stat-num">${revs.length}</span><span class="an-stat-label">Reviews</span></div>
+      <div class="an-stat"><span class="an-stat-num">${avgRating}${avgRating !== '—' ? ' ★' : ''}</span><span class="an-stat-label">Avg Rating</span></div>
+    </div>
+
+    <div class="an-grid">
+      <div class="an-card an-card-wide">
+        <h4>🏆 Top Rated Games</h4>
+        ${gameRatings.length ? `<div class="top-rated-list">${gameRatings.map((x, i) => `
+          <div class="top-rated-item" onclick="renderView('game-details','${x.game.id}')" style="cursor:pointer;">
+            <span class="top-rated-rank">#${i+1}</span>
+            <img class="top-rated-cover" src="${x.game.coverUrl || 'https://via.placeholder.com/40x55?text=?'}" alt="${x.game.title}">
+            <div class="top-rated-info">
+              <span class="top-rated-title">${x.game.title}</span>
+              <span class="top-rated-meta">${x.game.developer || ''} · ${'★'.repeat(Math.round(x.avg))}${'☆'.repeat(5 - Math.round(x.avg))} (${x.avg.toFixed(1)})</span>
+            </div>
+            <span class="top-rated-reviews">${x.reviewCount} review${x.reviewCount !== 1 ? 's' : ''}</span>
+          </div>`).join('')}</div>` : '<p class="an-empty">Rate some routes to see your top games!</p>'}
       </div>
 
-      <div class="analytics-card">
-        <h4>⏱️ Completion Time</h4>
-        <div class="analytics-stat-row"><span class="analytics-stat-label">Average</span><span class="analytics-stat-value">${completedPts.length ? avgDays+' days' : '—'}</span></div>
-        <div class="analytics-stat-row"><span class="analytics-stat-label">Fastest Route</span><span class="analytics-stat-value">${fastestDays !== Infinity ? fastestDays+' days' : '—'}</span></div>
-        <div class="analytics-stat-row"><span class="analytics-stat-label">Slowest Route</span><span class="analytics-stat-value">${slowestDays ? slowestDays+' days' : '—'}</span></div>
-        <div class="analytics-stat-row"><span class="analytics-stat-label">Most Productive Month</span><span class="analytics-stat-value" style="font-size:.9rem;">${topMonthLabel}</span></div>
+      <div class="an-card an-card-wide">
+        <h4>📋 Status Breakdown</h4>
+        <div class="status-segments">${statusSegments || '<p class="an-empty">No games yet.</p>'}</div>
       </div>
 
-      <div class="analytics-card">
+      <div class="an-card">
+        <h4>⏱️ Completion Stats</h4>
+        <div class="an-kv"><span>Average Time</span><strong>${completedPts.length ? avgDays + ' days' : '—'}</strong></div>
+        <div class="an-kv"><span>Fastest Route</span><strong>${fastestDays !== Infinity ? fastestDays + ' days' : '—'}</strong></div>
+        <div class="an-kv"><span>Slowest Route</span><strong>${slowestDays ? slowestDays + ' days' : '—'}</strong></div>
+        <div class="an-kv"><span>Best Month</span><strong style="font-size:.85rem;">${topMonthLabel}</strong></div>
+      </div>
+
+      <div class="an-card">
         <h4>🏷️ Tags</h4>
-        ${barChart(topTags, tagMax)}
+        ${hBar(topTags, tagMax)}
       </div>
 
-      <div class="analytics-card">
-        <h4>🎮 By Platform</h4>
-        ${barChart(platforms, platMax)}
+      <div class="an-card">
+        <h4>🎮 Platforms</h4>
+        ${hBar(platformData, platMax)}
       </div>
 
-      <div class="analytics-card">
-        <h4>📋 Status Distribution</h4>
-        ${distBars(statusCounts, statusTotal)}
-      </div>
-
-      <div class="analytics-card">
-        <h4>⭐ Rating Distribution</h4>
-        ${barChart(Object.entries(ratingCounts).map(([k,v])=>[k+' ★',v]), ratingMax)}
+      <div class="an-card">
+        <h4>⭐ Ratings</h4>
+        ${hBar([5,4,3,2,1].map(n => [n + ' ★', ratingCounts[n]]), ratingMax, (label, i) => {
+          const colors = ['#ff8fa3','#ffb3c6','#ffccd5','#fce4ec','#f8bbd0'];
+          return colors[i] || '';
+        })}
       </div>
     </div>`;
 }
