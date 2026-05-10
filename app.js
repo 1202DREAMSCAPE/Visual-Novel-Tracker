@@ -223,9 +223,9 @@ function renderDashboard() {
     window.setHeroSlide(0);
   } else {
     heroHTML = `
-      <div class="hero-carousel" style="display:flex;align-items:center;justify-content:center;background:#1c2228;flex-direction:column;gap:1rem;">
+      <div class="hero-carousel hero-empty">
         <div class="hero-tag">Welcome to VN Library</div>
-        <h2 class="hero-title" style="font-size:2rem;margin:0;">Ready to start reading?</h2>
+        <h2 class="hero-title">Ready to start reading?</h2>
         <button class="btn btn-primary" onclick="renderView('add-game')" style="margin-top:1rem;">+ Add a Visual Novel</button>
       </div>
     `;
