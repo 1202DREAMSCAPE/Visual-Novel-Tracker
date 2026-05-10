@@ -3,14 +3,14 @@ const STORAGE_KEY = 'vnTrackerData';
 const defaults = { games:[], playthroughs:[], reviews:[], settings:{ theme:'light', backgroundUrl:'', avatarUrl:'', tagline:'VN Enthusiast' } };
 
 const Icons = {
-  check:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>`,
-  trash:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
-  edit:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>`,
-  heart:`<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
-  drop:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
-  download:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
-  upload:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
-  fileText:`<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`
+  check:`<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>`,
+  trash:`<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
+  edit:`<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>`,
+  heart:`<svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
+  drop:`<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  download:`<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  upload:`<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
+  fileText:`<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="1em" height="1em"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`
 };
 
 function loadData() {
@@ -64,28 +64,6 @@ const navLinks      = document.querySelectorAll('.nav-links a');
 const modalContainer= document.getElementById('modal-container');
 const modalBody     = document.getElementById('modal-body');
 
-// ── Sidebar collapse ──────────────────────────────────────
-const sidebar = document.getElementById('sidebar');
-const sidebarToggle = document.getElementById('sidebar-toggle');
-
-function setSidebarState(collapsed) {
-  if (collapsed) {
-    sidebar.classList.add('collapsed');
-  } else {
-    sidebar.classList.remove('collapsed');
-  }
-  localStorage.setItem('vnSidebarCollapsed', collapsed ? '1' : '0');
-}
-
-// Restore saved state
-if (localStorage.getItem('vnSidebarCollapsed') === '1') {
-  sidebar.classList.add('collapsed');
-}
-
-sidebarToggle.addEventListener('click', () => {
-  setSidebarState(!sidebar.classList.contains('collapsed'));
-});
-
 // ── Nav ───────────────────────────────────────────────────
 navLinks.forEach(link => {
   link.addEventListener('click', e => {
@@ -100,6 +78,9 @@ navLinks.forEach(link => {
 let currentView = 'dashboard', currentParam = null;
 function renderView(view, param) {
   currentView = view; currentParam = param;
+  // Clear any timers
+  if (window._heroInterval) { clearInterval(window._heroInterval); window._heroInterval = null; }
+  
   viewContainer.innerHTML = '';
   viewContainer.style.animation = 'none';
   requestAnimationFrame(() => { viewContainer.style.animation = ''; });
@@ -183,120 +164,99 @@ function renderDashboard() {
   );
   const playing = playingGames.length;
 
-  // Now Playing section
-  const nowPlayingHTML = playingGames.length ? `
-    <div class="now-playing-section">
-      <h3 class="section-heading" style="display:flex;align-items:center;gap:8px;">▶ Currently Playing <span class="now-playing-count">${playingGames.length}</span></h3>
-      <div class="now-playing-strip">${playingGames.map(g => {
-        const activeRoutes = appData.playthroughs.filter(p => p.gameId === g.id && p.status === 'Playing');
-        const routeText = activeRoutes.length ? activeRoutes.map(p=>p.route).join(', ') : '';
-        const startText = g.startDate ? `Started ${g.startDate}` : (activeRoutes.length && activeRoutes[0]?.startDate ? `Started ${activeRoutes[0].startDate}` : '');
-        return `<div class="now-playing-card" onclick="renderView('game-details','${g.id}')">
-          <img src="${g.coverUrl||'https://via.placeholder.com/80x110?text=?'}" alt="${g.title}">
-          <div class="now-playing-info">
-            <div class="now-playing-title">${g.title}</div>
-            ${routeText ? `<div class="now-playing-route">${routeText}</div>` : ''}
-            ${startText ? `<div class="now-playing-route" style="font-size:.7rem;color:var(--text-muted);">${startText}</div>` : ''}
+  // Hero Carousel
+  let heroHTML = '';
+  if (playingGames.length > 0) {
+    const slides = playingGames.map((g, index) => {
+      const activeRoutes = appData.playthroughs.filter(p => p.gameId === g.id && p.status === 'Playing');
+      const routeText = activeRoutes.length ? activeRoutes.map(p=>p.route).join(', ') : '';
+      return `
+        <div class="hero-slide ${index === 0 ? 'active' : ''}" data-index="${index}">
+          <div class="hero-bg" style="background-image: url('${g.coverUrl || 'https://via.placeholder.com/800x400'}')"></div>
+          <div class="hero-gradient"></div>
+          <div class="hero-content">
+            <div class="hero-tag">Currently Playing</div>
+            <h2 class="hero-title">${g.title}</h2>
+            ${routeText ? `<p class="hero-desc"><strong>Routes:</strong> ${routeText}</p>` : ''}
+            <p class="hero-desc">${g.description || ''}</p>
+            <button class="btn btn-primary" onclick="renderView('game-details','${g.id}')">▶ Continue</button>
           </div>
-        </div>`;
-      }).join('')}</div>
-    </div>` : '';
+        </div>
+      `;
+    }).join('');
+    
+    const dots = playingGames.map((g, index) => 
+      `<div class="hero-dot ${index === 0 ? 'active' : ''}" onclick="window.setHeroSlide(${index})"></div>`
+    ).join('');
 
-  const recent = appData.playthroughs.slice().reverse().slice(0,5).map(p => {
+    heroHTML = `
+      <div class="hero-carousel" id="hero-carousel">
+        ${slides}
+        <div class="hero-arrow hero-arrow-left" onclick="window.moveHero(-1)">❮</div>
+        <div class="hero-arrow hero-arrow-right" onclick="window.moveHero(1)">❯</div>
+        <div class="hero-controls">${dots}</div>
+      </div>
+    `;
+    
+    let currentHeroIdx = 0;
+    window.setHeroSlide = function(index) {
+      currentHeroIdx = index;
+      const carousel = document.getElementById('hero-carousel');
+      if (!carousel) return;
+      const slides = carousel.querySelectorAll('.hero-slide');
+      const dotEls = carousel.querySelectorAll('.hero-dot');
+      slides.forEach((s, i) => s.classList.toggle('active', i === index));
+      dotEls.forEach((d, i) => d.classList.toggle('active', i === index));
+    };
+
+    window.moveHero = function(dir) {
+      let next = currentHeroIdx + dir;
+      if (next < 0) next = playingGames.length - 1;
+      if (next >= playingGames.length) next = 0;
+      window.setHeroSlide(next);
+    };
+
+    // Auto cycle
+    if (playingGames.length > 1) {
+      window._heroInterval = setInterval(() => window.moveHero(1), 5000);
+    }
+    window.setHeroSlide(0);
+  } else {
+    heroHTML = `
+      <div class="hero-carousel" style="display:flex;align-items:center;justify-content:center;background:#1c2228;flex-direction:column;gap:1rem;">
+        <div class="hero-tag">Welcome to VN Library</div>
+        <h2 class="hero-title" style="font-size:2rem;margin:0;">Ready to start reading?</h2>
+        <button class="btn btn-primary" onclick="renderView('add-game')" style="margin-top:1rem;">+ Add a Visual Novel</button>
+      </div>
+    `;
+  }
+
+  const recent = appData.playthroughs.slice().reverse().slice(0,6).map(p => {
     const g = appData.games.find(g => g.id===p.gameId);
     if (!g) return '';
-    return `<div class="log-entry${p.isFavorite?' is-favorite':''}" onclick="renderView('game-details','${g.id}')" style="cursor:pointer;padding:1rem;margin-bottom:.75rem;">
-      <div class="log-header">
-        <span class="route-name" style="font-size:1rem;">${g.title} — ${p.route}</span>
+    return `<div class="log-entry" onclick="renderView('game-details','${g.id}')" style="cursor:pointer;display:flex;align-items:center;gap:1rem;">
+      <img src="${g.coverUrl||'https://via.placeholder.com/50x75'}" style="width:40px;height:60px;object-fit:cover;border-radius:2px;">
+      <div>
+        <div class="log-header" style="margin-bottom:0.2rem;">
+          <span class="route-name" style="font-size:1rem;">${g.title} — ${p.route}</span>
+        </div>
         ${statusBadge(p.status)}
       </div>
     </div>`;
   }).join('') || `<p style="color:var(--text-muted)">No activity yet.</p>`;
 
-  const favCards = favs.map(p => {
-    const g = appData.games.find(g => g.id===p.gameId);
-    if (!g) return '';
-    const img = p.characterPhotoUrl || g.coverUrl || 'https://via.placeholder.com/50';
-    return `<div class="log-entry" onclick="renderView('game-details','${g.id}')" title="${g.title} — ${p.route}" style="cursor:pointer;padding:.85rem;margin-bottom:.75rem;display:flex;align-items:center;gap:12px;">
-      <img src="${img}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--accent-primary);flex-shrink:0;">
-      <div><div style="font-family:'Playfair Display',serif;font-weight:700;color:var(--text-primary);">${g.title}</div>
-      <div style="font-size:.8rem;color:var(--text-muted);">${p.route}</div></div>
-    </div>`;
-  }).join('') || `<p style="color:var(--text-muted)">No favorites yet.</p>`;
-
-  // Milestones / achievements — with real data
-  const milestones = [];
-  
-  // First VN added
-  if (appData.games.length >= 1) {
-    const first = appData.games[0];
-    milestones.push({icon:'📖', label:'First VN added', detail:`${first.title}`, clickId: first.id});
-  }
-  // 10 VNs
-  if (appData.games.length >= 10) {
-    milestones.push({icon:'📚', label:'10 VNs collected', detail:`${appData.games.length} total in library`});
-  }
-  // 25 VNs
-  if (appData.games.length >= 25) {
-    milestones.push({icon:'🏛️', label:'True collector', detail:`${appData.games.length} VNs and counting`});
-  }
-  // First route completed
-  const firstCompleted = appData.playthroughs.find(p => p.status === 'Completed');
-  if (firstCompleted) {
-    const fcGame = appData.games.find(g => g.id === firstCompleted.gameId);
-    milestones.push({icon:'🏁', label:'First route completed', detail:`${fcGame ? fcGame.title + ' — ' : ''}${firstCompleted.route}${firstCompleted.endDate ? ' · ' + firstCompleted.endDate : ''}`, clickId: fcGame?.id});
-  }
-  // 10 routes completed
-  const completedPts = appData.playthroughs.filter(p => p.status === 'Completed');
-  if (completedPts.length >= 10) {
-    milestones.push({icon:'🎖️', label:'10 routes completed', detail:`${completedPts.length} routes done so far`});
-  }
-  // 25 routes completed
-  if (completedPts.length >= 25) {
-    milestones.push({icon:'👑', label:'Route royalty', detail:`${completedPts.length} routes conquered`});
-  }
-  // 5 favorites
-  if (favs.length >= 5) {
-    const topFav = favs[0];
-    const topFavGame = appData.games.find(g => g.id === topFav?.gameId);
-    milestones.push({icon:'💕', label:'5 favorite routes', detail:`Including ${topFavGame ? topFavGame.title + ' — ' : ''}${topFav?.route || ''}`});
-  }
-  // Reviews
-  const revCount = appData.reviews.length;
-  if (revCount >= 5) {
-    milestones.push({icon:'✍️', label:'5 reviews written', detail:`${revCount} total reviews`});
-  }
-  if (revCount >= 15) {
-    milestones.push({icon:'📝', label:'Certified critic', detail:`${revCount} reviews and counting`});
-  }
-
-  const milestonesHTML = milestones.length ? `
-    <div style="margin-top:1.5rem;">
-      <h3 class="section-heading">🏆 Milestones</h3>
-      <div class="milestones-list">${milestones.map(m => `
-        <div class="milestone-pill${m.clickId ? ' milestone-clickable' : ''}" ${m.clickId ? `onclick="renderView('game-details','${m.clickId}')" style="cursor:pointer;"` : ''}>
-          <div class="milestone-header">${m.icon} ${m.label}</div>
-          <div class="milestone-detail">${m.detail}</div>
-        </div>`).join('')}</div>
-    </div>` : '';
-
   viewContainer.innerHTML = `
-    ${nowPlayingHTML}
+    ${heroHTML}
     <div class="stats-grid">
       <div class="stat-card"><span class="stat-title">Total VNs</span><span class="stat-value">${total}</span></div>
       <div class="stat-card"><span class="stat-title">Currently Playing</span><span class="stat-value">${playing}</span></div>
       <div class="stat-card"><span class="stat-title">Routes Completed</span><span class="stat-value">${done}</span></div>
       <div class="stat-card"><span class="stat-title">Fav Routes</span><span class="stat-value">${favs.length}</span></div>
     </div>
-    <div style="display:flex;gap:2rem;flex-wrap:wrap;">
-      <div style="flex:2;min-width:280px;">
-        <h3 class="section-heading">Recent Activity</h3>
-        <div class="trail-log">${recent}</div>
-      </div>
-      <div style="flex:1;min-width:220px;">
-        <h3 class="section-heading">Favorite Routes</h3>
-        ${favCards}
-        ${milestonesHTML}
+    <div>
+      <h3 class="section-heading">Recent Activity</h3>
+      <div class="trail-log" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill, minmax(250px, 1fr));margin-top:0;">
+        ${recent}
       </div>
     </div>`;
 }
@@ -458,9 +418,9 @@ function drawGrid() {
   games = sortGames(games);
   
   let viewClass = 'library-grid';
-  if (libViewMode === 'Grid S') viewClass = 'library-grid-s';
-  else if (libViewMode === 'Grid L') viewClass = 'library-grid-l';
-  else if (libViewMode === 'List') viewClass = 'library-list';
+  if (libViewMode.includes('Grid S')) viewClass = 'library-grid-s';
+  else if (libViewMode.includes('Grid L')) viewClass = 'library-grid-l';
+  else if (libViewMode.includes('List')) viewClass = 'library-list';
   
   el.innerHTML = `<div class="${viewClass}">${games.map(g => {
     const routeCount = getGameRouteCount(g.id);
@@ -474,6 +434,25 @@ function drawGrid() {
     const ratingBadge = avgRating > 0 ? `<span class="card-badge card-badge-rating" title="Average rating: ${avgRating.toFixed(1)}">${avgRating.toFixed(1)} ★</span>` : '';
     const statusMini = g.status && g.status !== 'Want to Play' ? `<span class="status-badge ${statusClass}" style="font-size:.6rem;padding:2px 8px;">${g.status}</span>` : '';
     
+    if (viewClass === 'library-list') {
+        return `
+        <div class="lib-list-item" onclick="renderView('game-details','${g.id}')">
+          <img src="${g.coverUrl||'https://via.placeholder.com/60x90?text=No+Cover'}" class="lib-list-cover">
+          <div class="lib-list-main">
+            <div class="lib-list-info">
+              <div class="lib-list-title">${g.title}</div>
+              <div class="lib-list-meta">${g.developer||'—'} • ${g.platform||'—'}</div>
+            </div>
+            <div class="lib-list-stats">
+              <div style="width:120px; display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end;">${tagsHTML(g.tags)}</div>
+              <div style="width:100px; text-align:right;">${statusMini}</div>
+              <div class="lib-list-progress" style="width:80px; text-align:right; font-weight:700; color:var(--accent-primary);">${completedCount}/${routeCount}</div>
+              <div style="width:80px; text-align:right;">${ratingBadge}</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
     return `
     <div class="game-card" onclick="renderView('game-details','${g.id}')">
       <div class="game-cover-wrap">
@@ -497,29 +476,33 @@ function drawGrid() {
 // ── Add Game ──────────────────────────────────────────────
 function renderAddGame() {
   viewContainer.innerHTML = `
-    <div style="display:flex;gap:2.5rem;max-width:860px;margin:0 auto;">
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding-top:1rem;">
-        <img id="cover-prev" src="https://via.placeholder.com/240x340?text=Cover" style="width:200px;height:290px;object-fit:cover;border-radius:16px;margin-bottom:1.25rem;box-shadow:var(--shadow-sm);">
-        <div class="form-group" style="width:100%;margin-bottom:.5rem;">
-          <label>Cover Image URL</label>
+    <div class="add-game-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:2.5rem; margin:0 auto; align-items: flex-start;">
+      <div class="glass-panel cover-upload-section" style="display:flex; flex-direction:column; align-items:center; padding:2rem; position:sticky; top:2rem;">
+        <img id="cover-prev" src="https://via.placeholder.com/240x340?text=Cover" style="width:100%; max-width:240px; aspect-ratio:2/3; object-fit:cover; border-radius:12px; margin-bottom:1.5rem; box-shadow:var(--shadow-md); border:1px solid var(--glass-border);">
+        <div class="form-group" style="width:100%;">
+          <label style="text-align:center; display:block;">Cover Image URL</label>
           <input type="url" id="g-cover" class="form-control" placeholder="Paste URL…" oninput="document.getElementById('cover-prev').src=this.value||'https://via.placeholder.com/240x340?text=Cover'" style="text-align:center;">
         </div>
-        <div style="display:flex;gap:.5rem;width:100%;">
-          <button type="button" class="btn btn-ghost" style="flex:1;font-size:.82rem;padding:.6rem;" onclick="cropCover()">✂️ Crop</button>
-          <label class="btn btn-ghost" style="flex:1;font-size:.82rem;padding:.6rem;cursor:pointer;">📁 File<input type="file" id="g-cover-file" accept="image/*" style="display:none;" onchange="coverFromFile(event)"></label>
+        <div style="display:flex; gap:.75rem; width:100%; margin-top:.5rem;">
+          <button type="button" class="btn btn-ghost" style="flex:1; font-size:.85rem;" onclick="cropCover()">✂️ Crop</button>
+          <label class="btn btn-ghost" style="flex:1; font-size:.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">📁 File<input type="file" id="g-cover-file" accept="image/*" style="display:none;" onchange="coverFromFile(event)"></label>
         </div>
       </div>
-      <div class="glass-panel" style="flex:1.5;padding:2rem;">
+      
+      <div class="glass-panel" style="padding:2.5rem;">
+        <h3 style="margin-bottom:1.5rem; color:var(--accent-primary); font-size:1.5rem;">Add New Visual Novel</h3>
         <form id="add-form">
           <div class="form-group"><label>Title *</label><input type="text" id="g-title" class="form-control" placeholder="e.g. Clannad, Our Life…" required></div>
-          <div class="form-group"><label>Developer</label><input type="text" id="g-dev" class="form-control" placeholder="e.g. Cheritz, Key…"></div>
-          <div class="form-group">
-            <label>Platform *</label>
-            <input list="plat-list" id="g-platform" class="form-control" placeholder="Steam, Itch.io, Yuzu…" required>
-            <datalist id="plat-list"><option>Steam</option><option>Itch.io</option><option>Nintendo Switch</option><option>PlayStation</option><option>Mobile</option></datalist>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+            <div class="form-group"><label>Developer</label><input type="text" id="g-dev" class="form-control" placeholder="e.g. Cheritz, Key…"></div>
+            <div class="form-group">
+              <label>Platform *</label>
+              <input list="plat-list" id="g-platform" class="form-control" placeholder="Steam, Switch…" required>
+              <datalist id="plat-list"><option>Steam</option><option>Itch.io</option><option>Nintendo Switch</option><option>PlayStation</option><option>Mobile</option></datalist>
+            </div>
           </div>
           <div class="form-group">
-            <label>Status</label>
+            <label>Current Status</label>
             <select id="g-status" class="form-control" onchange="document.getElementById('g-start-date-container').style.display = this.value === 'Want to Play' ? 'none' : 'block'">
               <option>Want to Play</option><option>Playing</option><option>Completed</option><option>Paused</option><option>Dropped</option>
             </select>
@@ -529,8 +512,12 @@ function renderAddGame() {
             <input type="date" id="g-start-date" class="form-control" value="${new Date().toISOString().split('T')[0]}">
           </div>
           <div class="form-group"><label>Tags (comma separated)</label><input type="text" id="g-tags" class="form-control" placeholder="Otome, Sci-Fi, Romance…"></div>
-          <div class="form-group"><label>Synopsis</label><textarea id="g-desc" class="form-control" rows="3" placeholder="What is this VN about?"></textarea></div>
-          <button type="submit" class="btn btn-primary" style="width:100%;margin-top:.5rem;">${Icons.check} Add to Library</button>
+          <div class="form-group"><label>Synopsis / Description</label><textarea id="g-desc" class="form-control" rows="4" placeholder="What is this VN about?"></textarea></div>
+          
+          <div style="display:flex; gap:1rem; margin-top:2rem;">
+            <button type="button" class="btn btn-ghost" style="flex:1;" onclick="renderView('library')">Cancel</button>
+            <button type="submit" class="btn btn-primary" style="flex:2;">${Icons.check} Add to Library</button>
+          </div>
         </form>
       </div>
     </div>`;
@@ -975,11 +962,7 @@ document.querySelector('.avatar').addEventListener('click', () => {
     </div>
     <div class="divider"></div>
     <h4 style="margin-bottom:1rem;font-size:.95rem;">Settings</h4>
-    <div class="toggle-row">
-      <span class="toggle-label">Dark Mode</span>
-      <label class="toggle-switch"><input type="checkbox" id="dark-toggle" ${s.theme==='dark'?'checked':''}><span class="toggle-slider"></span></label>
-    </div>
-    <div class="form-group" style="margin-top:1rem;">
+    <div class="form-group">
       <label>Custom Background URL</label>
       <input type="url" id="bg-url" class="form-control" placeholder="Leave blank for default…" value="${s.backgroundUrl||''}">
     </div>
@@ -1007,7 +990,6 @@ document.querySelector('.avatar').addEventListener('click', () => {
   });
 
   document.getElementById('save-settings-btn').onclick = () => {
-    appData.settings.theme = document.getElementById('dark-toggle').checked ? 'dark' : 'light';
     appData.settings.backgroundUrl = document.getElementById('bg-url').value;
     appData.settings.tagline = document.getElementById('profile-tagline').value || 'VN Enthusiast';
     saveData(); closeModal();
@@ -1284,65 +1266,101 @@ function drawAnalytics() {
   const statusEntries = Object.entries(statusCounts).filter(([,c]) => c > 0);
   const statusSegments = statusEntries.map(([label, count]) => {
     const pct = Math.round((count / statusTotal) * 100);
-    return `<div class="status-segment">
-      <div class="status-segment-bar" style="background:${statusColors[label]};width:${Math.max(pct, 4)}%;"></div>
-      <div class="status-segment-info">
-        <span class="status-segment-label">${label}</span>
-        <span class="status-segment-value">${count} <small>(${pct}%)</small></span>
+    return `<div class="status-segment" style="margin-bottom:.5rem;">
+      <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+        <span class="status-segment-label" style="font-weight:600; color:var(--text-secondary);">${label}</span>
+        <span class="status-segment-value">${count} <small style="opacity:.6;">(${pct}%)</small></span>
       </div>
+      <div class="status-segment-bar" style="background:${statusColors[label]}; width:${Math.max(pct, 4)}%; height:8px; border-radius:4px;"></div>
     </div>`;
   }).join('');
 
+  // Most played developer
+  const devCounts = {};
+  games.forEach(g => { if(g.developer) devCounts[g.developer] = (devCounts[g.developer]||0) + 1; });
+  const topDev = Object.entries(devCounts).sort((a,b)=>b[1]-a[1])[0] || ['Unknown','0'];
+
   container.innerHTML = `
-    <div class="an-stats-row">
-      <div class="an-stat"><span class="an-stat-num">${games.length}</span><span class="an-stat-label">Games</span></div>
-      <div class="an-stat"><span class="an-stat-num">${totalRoutes}</span><span class="an-stat-label">Routes</span></div>
-      <div class="an-stat"><span class="an-stat-num">${completedRoutes}</span><span class="an-stat-label">Completed</span></div>
-      <div class="an-stat"><span class="an-stat-num">${favRoutes}</span><span class="an-stat-label">Favorites</span></div>
-      <div class="an-stat"><span class="an-stat-num">${revs.length}</span><span class="an-stat-label">Reviews</span></div>
-      <div class="an-stat"><span class="an-stat-num">${avgRating}${avgRating !== '—' ? ' ★' : ''}</span><span class="an-stat-label">Avg Rating</span></div>
+    <div class="an-hero">
+      <div class="an-hero-main">
+        <span class="an-hero-title">Visual Novel Journey</span>
+        <div class="an-hero-val">${games.length}</div>
+        <span class="an-hero-stat-label">Total Titles Tracked</span>
+      </div>
+      <div class="an-hero-stats">
+        <div class="an-hero-stat">
+          <span class="an-hero-stat-val">${completedRoutes}</span>
+          <span class="an-hero-stat-label">Completed Routes</span>
+        </div>
+        <div class="an-hero-stat">
+          <span class="an-hero-stat-val" style="color:var(--accent-primary);">${avgRating} ★</span>
+          <span class="an-hero-stat-label">Average Rating</span>
+        </div>
+      </div>
     </div>
 
-    <div class="an-grid">
-      <div class="an-card an-card-wide">
-        <h4>🏆 Top Rated Games</h4>
+    <div class="an-stats-grid">
+      <div class="an-card-stat" title="Total number of routes/playthroughs across all games in your library.">
+        <span class="an-card-stat-label">Total Routes ⓘ</span>
+        <div class="an-card-stat-val">${totalRoutes}</div>
+      </div>
+      <div class="an-card-stat" style="border-left-color: #81c784;" title="Percentage of routes that have been marked as 'Completed'. (Completed / Total)">
+        <span class="an-card-stat-label">Completion Rate ⓘ</span>
+        <div class="an-card-stat-val">${Math.round((completedRoutes/Math.max(totalRoutes,1))*100)}%</div>
+      </div>
+      <div class="an-card-stat" style="border-left-color: #ffd700;" title="Number of routes you have marked as a favorite.">
+        <span class="an-card-stat-label">Favorite Routes ⓘ</span>
+        <div class="an-card-stat-val">${favRoutes}</div>
+      </div>
+      <div class="an-card-stat" style="border-left-color: #74c0fc;" title="Total number of reviews written for your playthroughs.">
+        <span class="an-card-stat-label">Total Reviews ⓘ</span>
+        <div class="an-card-stat-val">${revs.length}</div>
+      </div>
+    </div>
+
+    <div class="an-bento">
+      <div class="an-card" style="grid-row: span 2;">
+        <h4>🏆 Top Rated Titles</h4>
         ${gameRatings.length ? `<div class="top-rated-list">${gameRatings.map((x, i) => `
-          <div class="top-rated-item" onclick="renderView('game-details','${x.game.id}')" style="cursor:pointer;">
+          <div class="top-rated-item" onclick="renderView('game-details','${x.game.id}')">
             <span class="top-rated-rank">#${i+1}</span>
             <img class="top-rated-cover" src="${x.game.coverUrl || 'https://via.placeholder.com/40x55?text=?'}" alt="${x.game.title}">
             <div class="top-rated-info">
               <span class="top-rated-title">${x.game.title}</span>
-              <span class="top-rated-meta">${x.game.developer || ''} · ${'★'.repeat(Math.round(x.avg))}${'☆'.repeat(5 - Math.round(x.avg))} (${x.avg.toFixed(1)})</span>
+              <span class="top-rated-meta">${x.game.developer || 'Unknown Dev'} · ${x.avg.toFixed(1)} ★</span>
             </div>
-            <span class="top-rated-reviews">${x.reviewCount} review${x.reviewCount !== 1 ? 's' : ''}</span>
+            <div style="text-align:right;">
+               <div style="color:var(--accent-primary); font-weight:700;">${'★'.repeat(Math.round(x.avg))}</div>
+               <span class="top-rated-reviews">${x.reviewCount} route${x.reviewCount !== 1 ? 's' : ''} rated</span>
+            </div>
           </div>`).join('')}</div>` : '<p class="an-empty">Rate some routes to see your top games!</p>'}
       </div>
 
-      <div class="an-card an-card-wide">
+      <div class="an-card">
         <h4>📋 Status Breakdown</h4>
         <div class="status-segments">${statusSegments || '<p class="an-empty">No games yet.</p>'}</div>
       </div>
 
       <div class="an-card">
-        <h4>⏱️ Completion Stats</h4>
-        <div class="an-kv"><span>Average Time</span><strong>${completedPts.length ? avgDays + ' days' : '—'}</strong></div>
-        <div class="an-kv"><span>Fastest Route</span><strong>${fastestDays !== Infinity ? fastestDays + ' days' : '—'}</strong></div>
-        <div class="an-kv"><span>Slowest Route</span><strong>${slowestDays ? slowestDays + ' days' : '—'}</strong></div>
-        <div class="an-kv"><span>Best Month</span><strong style="font-size:.85rem;">${topMonthLabel}</strong></div>
+        <h4>⏱️ Completion Velocity</h4>
+        <div class="an-kv"><span>Avg Time / Route</span><strong>${completedPts.length ? avgDays + ' days' : '—'}</strong></div>
+        <div class="an-kv"><span>Fastest Completion</span><strong>${fastestDays !== Infinity ? fastestDays + ' days' : '—'}</strong></div>
+        <div class="an-kv"><span>Top Developer</span><strong style="color:var(--accent-primary);">${topDev[0]} (${topDev[1]})</strong></div>
+        <div class="an-kv"><span>Prime Month</span><strong style="font-size:.85rem; color:var(--accent-primary);">${topMonthLabel}</strong></div>
       </div>
 
       <div class="an-card">
-        <h4>🏷️ Tags</h4>
+        <h4>🏷️ Popular Tags</h4>
         ${hBar(topTags, tagMax)}
       </div>
 
       <div class="an-card">
-        <h4>🎮 Platforms</h4>
+        <h4>🎮 Platform Distribution</h4>
         ${hBar(platformData, platMax)}
       </div>
 
       <div class="an-card">
-        <h4>⭐ Ratings</h4>
+        <h4>⭐ Rating Distribution</h4>
         ${hBar([5,4,3,2,1].map(n => [n + ' ★', ratingCounts[n]]), ratingMax, (label, i) => {
           const colors = ['#ff8fa3','#ffb3c6','#ffccd5','#fce4ec','#f8bbd0'];
           return colors[i] || '';
